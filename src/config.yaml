@@ -1,0 +1,92 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# LeWM Crafter Config
+# Consumed by ledata.py (data collection) and letrain.py (training).
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Paths are relative to the project root (parent of src/). Override with an
+# absolute path (e.g. /scratch/...) on clusters that store data elsewhere.
+# ── Data collection (ledata.py) ───────────────────────────────────────────────
+data:
+  save_path: /data/crafter/crafter_data.pkl
+
+  # Number of full Crafter episodes to simulate and save.
+  # Each episode runs until the agent dies or max_steps is hit.
+  # More episodes = more diverse coverage of the tech tree.
+  # Rule of thumb: ≥1000 for meaningful training; 10 000 for paper-quality runs.
+  n_episodes: 10000
+
+  max_steps_per_episode: 50000
+
+  # Fraction of steps taken with a uniform-random action instead of the
+  # scripted heuristic.  0.0 = pure heuristic, 1.0 = pure random.
+  epsilon: 0.2
+
+# ── Dataset / sequencing (CrafterDataset) ─────────────────────────────────────
+dataset:
+  # Number of consecutive frames fed to the model as one training sample.
+  #
+  # context_len = T means each sample is a window of T (obs, action) pairs.
+  # The dataset slides this window over every trajectory with a stride of
+  # T//2 (50 % overlap), so one episode of length L produces roughly
+  # 2 * L / T sequences.
+  #
+  # Larger T lets the predictor see more history before it must forecast,
+  # but also multiplies GPU memory: a batch of B sequences uses
+  #   B × T × C × H × W  floats for observations alone.
+  # Typical values: 8 (fast / low-memory), 16 (default), 32 (high-capacity).
+  context_len: 16
+
+  img_size: 64   # Crafter native resolution; do not change unless you resize obs
+
+# ── Model architecture (LeWM) ─────────────────────────────────────────────────
+model:
+  # Dimensionality of every latent vector z_t produced by the encoder.
+  # This is the "width" of the representation — larger means more expressive
+  # but more memory and slower training.
+  # Must divide evenly into encoder_heads and predictor_heads.
+  # Suggested: 128 (tiny), 256 (default), 512 (large).
+  latent_dim: 256
+
+  # ViT encoder (processes a single 64×64 frame → z_t)
+  patch_size: 8          # 8×8 patches → 64 tokens per frame
+  encoder_depth: 12      # transformer blocks in the encoder
+  encoder_heads: 3       # attention heads (latent_dim / encoder_heads = head_dim)
+
+  # Causal predictor (rolls forward over the context window)
+  predictor_depth: 6
+  predictor_heads: 16
+
+  # SIGReg regularizer
+  sigreg_M: 1024         # number of random projection directions
+  sigreg_lambda: 0.1     # weight of the SIGReg term in the total loss
+
+  dropout: 0.1
+
+# ── Training (letrain.py) ─────────────────────────────────────────────────────
+training:
+  # Number of full passes over the training dataset.
+  # One epoch = all sequences in the dataset seen once.
+  # With context_len=16 and 2000 episodes each ~1000 steps, expect
+  # ~125 000 sequences → a single epoch is ~1000 gradient steps at batch_size=128.
+  epochs: 100
+
+  # Number of sequences processed in one forward+backward pass.
+  #
+  # GPU memory scales as:  batch_size × context_len × tokens × latent_dim
+  # e.g. batch_size=128, context_len=16, 64 patch tokens, latent_dim=256
+  #   ≈ 128 × 16 × 64 × 256 × 4 bytes ≈ 536 MB just for activations.
+  # Doubling batch_size doubles memory.  Halve it if you hit OOM, then
+  # compensate with gradient accumulation or a larger learning rate.
+  # Typical values: 32 (single low-VRAM GPU), 128 (default), 256 (A100/H100).
+  batch_size: 128
+
+  lr: 3.0e-4
+  weight_decay: 1.0e-4
+  warmup_steps: 1000
+  total_steps: 200000
+  log_every: 50
+  seed: 0
+
+# ── Infrastructure ────────────────────────────────────────────────────────────
+infra:
+  logdir: logs/lewm_crafter

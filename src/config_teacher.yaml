@@ -1,0 +1,116 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# LeWM + PPO Teacher Config
+# Pipeline: train PPO teacher → collect teacher rollouts → train LeWM world model
+# ─────────────────────────────────────────────────────────────────────────────
+
+# ── Rollout collection strategy ───────────────────────────────────────────────
+rollout_collection:
+  # How to generate training data for the world model.
+  #
+  #   random      — uniform random actions (baseline; very sparse achievements)
+  #   heuristic   — scripted move+do bias from ledata.py (moderate coverage)
+  #   teacher_ppo — use the trained PPO teacher (dense achievements, high quality)
+  #
+  # "teacher_ppo" is strongly preferred: the PPO policy has learned which action
+  # sequences unlock achievements, making achievement-bearing timesteps ~10–50×
+  # more frequent than in random data. This directly improves world model quality
+  # for rare tech-tree events (make_iron_sword, place_furnace, etc.).
+  method: teacher_ppo
+
+  # Path where teacher rollouts are saved (relative to project root).
+  # ledata.CrafterDataset and letrain.py read from this file.
+  rollout_save_path: data/crafter_teacher_data.pkl
+
+  # Number of full episodes to collect with the teacher after PPO training.
+  # Each episode contributes ~2*L/context_len training windows to the dataset.
+  # Teacher episodes are much denser in events, so fewer are needed vs. random:
+  #   random needs ~10 000 episodes for comparable achievement coverage;
+  #   teacher achieves similar coverage in ~2 000–5 000 episodes.
+  n_episodes: 5000
+
+  max_steps_per_episode: 10000
+
+  # Checkpoint loaded by the collection phase.
+  # Set automatically to teacher_save_path if not overridden.
+  teacher_checkpoint: data/ppo_teacher.pt
+
+  # Fraction of steps where a uniform-random action replaces the teacher's action.
+  # Purpose: prevent the dataset from collapsing to near-identical high-reward
+  # trajectories, which would cause the world model to overfit a narrow mode.
+  # 0.05 (5 %) is a good default — preserves policy quality while adding variety.
+  collection_epsilon: 0.05
+
+  # If true, always pick argmax action (mode) instead of sampling.
+  # False = stochastic sampling → more diverse trajectories (recommended).
+  # True  = deterministic → highest-quality individual trajectories but lower
+  #         diversity; only useful for very small datasets or ablations.
+  deterministic: false
+
+# ── PPO teacher training (teacherPPO.py) ──────────────────────────────────────
+ppo:
+  # Where to save the trained teacher policy checkpoint.
+  teacher_save_path: data/ppo_teacher.pt
+
+  # Total environment steps to train the teacher.
+  # Rule of thumb: 500k steps is enough to unlock most early-game achievements;
+  # 2M steps for consistent iron/late-game coverage.
+  ppo_total_steps: 500000
+
+  # Number of parallel Crafter environments stepped simultaneously.
+  # More envs = more diverse data per update; capped by CPU cores on the node.
+  n_envs: 8
+
+  # Steps collected per env between each PPO update.
+  # Larger = lower variance gradient estimates but slower iteration.
+  rollout_len: 128
+
+  # PPO epoch and minibatch structure
+  ppo_epochs: 4        # passes over each rollout buffer per update
+  minibatches: 4       # number of minibatches per epoch
+
+  # RL hyperparameters
+  gamma: 0.99          # discount factor
+  gae_lambda: 0.95     # GAE smoothing (0 = TD, 1 = MC)
+  clip_eps: 0.2        # PPO clipping range
+  ppo_lr: 2.5e-4       # Adam learning rate
+  ent_coef: 0.01       # entropy bonus coefficient (encourages exploration)
+
+# ── Dataset / sequencing (CrafterDataset) ─────────────────────────────────────
+dataset:
+  context_len: 16   # consecutive (obs, action) frames per training window
+  img_size: 64      # Crafter native resolution
+
+# ── LeWM model architecture ───────────────────────────────────────────────────
+model:
+  latent_dim: 256        # width of every z_t latent vector
+  patch_size: 8          # 8×8 patches → 64 tokens per 64×64 frame
+  encoder_depth: 12
+  encoder_heads: 3
+  predictor_depth: 6
+  predictor_heads: 16
+  sigreg_M: 1024         # random projection directions for SIGReg
+  sigreg_lambda: 0.1     # SIGReg loss weight
+  dropout: 0.1
+
+# ── LeWM training (letrain.py) ────────────────────────────────────────────────
+training:
+  epochs: 100
+  batch_size: 128
+  lr: 3.0e-4
+  weight_decay: 1.0e-4
+  warmup_steps: 1000
+  total_steps: 200000
+  log_every: 50
+  seed: 0
+
+# ── Infrastructure ────────────────────────────────────────────────────────────
+infra:
+  logdir: logs/lewm_teacher
+
+# ── Weights & Biases ──────────────────────────────────────────────────────────
+wandb:
+  # Set use_wandb: false to disable all wandb logging (e.g. offline nodes).
+  use_wandb: true
+  wandb_project: lewm-crafter
+  # PPO teacher run name; LeWM training uses its own run per seed (set in letrain.py)
+  wandb_run_name: ppo-teacher
