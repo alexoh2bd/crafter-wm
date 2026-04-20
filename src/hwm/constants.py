@@ -31,6 +31,18 @@ LATENT_DIM      = 256
 ACTION_DIM      = 17
 CONTEXT_LEN     = 16
 
+# ── HWM macro-action dimension ───────────────────────────────────────────────
+# ActionEncoder projects action sequences to MACRO_DIM vectors.
+# CEM searches in R^MACRO_DIM (tractable) while HighLevelPredictor
+# operates internally in R^LATENT_DIM.
+# Backward-compatible: old checkpoints without "macro_dim" in args used 256.
+MACRO_DIM       = 32
+
+# ── Action type boundary ──────────────────────────────────────────────────────
+# CRAFTER_ACTIONS[0:5]  = noop, move_left, move_right, move_up, move_down
+# CRAFTER_ACTIONS[5:17] = do, sleep, place_*, make_*  (interaction / crafting)
+NAV_ACTION_THRESHOLD = 5  # action index < 5 → navigation; ≥ 5 → interaction
+
 # ── Crafter action names (index matches env.action_space) ────────────────────
 CRAFTER_ACTIONS = [
     'noop', 'move_left', 'move_right', 'move_up', 'move_down',

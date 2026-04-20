@@ -39,11 +39,13 @@ from hwm.constants import (
     HWM_HIGH_CKPT,
     LATENT_DIM,
     LATENTS_CACHE,
+    MACRO_DIM,
     TRAJ_DATASET,
 )
 from hwm.models import (
     ActionEncoder,
     HighLevelPredictor,
+    SegmentedActionEncoder,
     load_lewm,
     one_hot_actions,
 )
@@ -60,17 +62,22 @@ def load_hwm_high(
     Returns:
         action_enc:  Frozen ActionEncoder.
         high_pred:   Frozen HighLevelPredictor.
-        macro_mean:  (D,) empirical mean of ActionEncoder outputs.
+        macro_mean:  (macro_dim,) empirical mean of ActionEncoder outputs.
                      Falls back to zeros if not present in checkpoint (pre-patch ckpts).
-        macro_std:   (D,) empirical std of ActionEncoder outputs.
+        macro_std:   (macro_dim,) empirical std of ActionEncoder outputs.
                      Falls back to ones if not present in checkpoint (pre-patch ckpts).
     """
     ckpt = torch.load(ckpt_path, map_location=device)
     saved_args = ckpt.get("args", {})
 
-    action_enc = ActionEncoder(
+    # Backward-compatible: old checkpoints without macro_dim used LATENT_DIM.
+    macro_dim = saved_args.get("macro_dim", LATENT_DIM)
+
+    EncCls = SegmentedActionEncoder if saved_args.get("segmented_encoder", False) else ActionEncoder
+    action_enc = EncCls(
         action_dim=ACTION_DIM,
         latent_dim=LATENT_DIM,
+        macro_dim=macro_dim,
         max_len=saved_args.get("max_subseq_len", 32),
     ).to(device)
     action_enc.load_state_dict(ckpt["action_encoder"])
@@ -80,18 +87,19 @@ def load_hwm_high(
 
     high_pred = HighLevelPredictor(
         latent_dim=LATENT_DIM,
+        macro_dim=macro_dim,
         depth=6,
         num_heads=16,
         dropout=0.1,
-        context_len=3,
+        context_len=saved_args.get("context_len", 3),
     ).to(device)
     high_pred.load_state_dict(ckpt["high_predictor"])
     high_pred.eval()
     for p in high_pred.parameters():
         p.requires_grad_(False)
 
-    macro_mean = ckpt.get("macro_action_mean", torch.zeros(LATENT_DIM)).to(device)
-    macro_std  = ckpt.get("macro_action_std",  torch.ones(LATENT_DIM)).to(device)
+    macro_mean = ckpt.get("macro_action_mean", torch.zeros(macro_dim)).to(device)
+    macro_std  = ckpt.get("macro_action_std",  torch.ones(macro_dim)).to(device)
 
     return action_enc, high_pred, macro_mean, macro_std
 
@@ -109,8 +117,13 @@ def cem_high(
     device: torch.device = torch.device("cpu"),
     macro_action_mean: Optional[torch.Tensor] = None,
     macro_action_std: Optional[torch.Tensor] = None,
+    cost_fn=None,
 ) -> tuple[torch.Tensor, torch.Tensor]:
     """Continuous Gaussian CEM over H_hi macro-actions.
+
+    Searches in R^{macro_dim} (inferred from macro_action_mean if provided,
+    else from high_pred.macro_dim), which is typically much smaller than
+    LATENT_DIM and makes the Gaussian search tractable.
 
     Args:
         high_pred:          Frozen HighLevelPredictor.
@@ -120,17 +133,21 @@ def cem_high(
         n_samples:          CEM population size.
         n_elite:            Number of elite samples.
         n_iters:            CEM refinement iterations.
-        macro_action_mean:  (D,) empirical mean to initialise mu (default: zeros).
-        macro_action_std:   (D,) empirical std to initialise sigma (default: ones).
+        macro_action_mean:  (macro_dim,) empirical mean to initialise mu.
+        macro_action_std:   (macro_dim,) empirical std to initialise sigma.
 
     Returns:
-        best_l_seq: (1, H_hi, D) optimal macro-action sequence.
+        best_l_seq: (1, H_hi, macro_dim) optimal macro-action sequence.
         z_subgoal:  (1, D) predicted latent after first macro-action.
     """
-    D = LATENT_DIM
+    # Infer search dimension from the provided stats or the model attribute.
+    if macro_action_mean is not None:
+        D = macro_action_mean.shape[0]
+    else:
+        D = getattr(high_pred, "macro_dim", LATENT_DIM)
 
-    # Seed the Gaussian prior from the empirical macro-action distribution so that
-    # the initial CEM samples are already on-manifold instead of N(0, I).
+    # Seed the Gaussian prior from the empirical macro-action distribution so
+    # initial CEM samples are on-manifold instead of N(0, I).
     if macro_action_mean is not None:
         mu = macro_action_mean.to(device).unsqueeze(0).expand(H_hi, -1).clone()
     else:
@@ -141,8 +158,8 @@ def cem_high(
     else:
         sigma = torch.ones(H_hi, D, device=device)
 
-    z_curr_exp = z_curr.expand(n_samples, -1)   # (n_samples, D)
-    z_goal_exp = z_goal.expand(n_samples, -1)   # (n_samples, D)
+    z_curr_exp = z_curr.expand(n_samples, -1)   # (n_samples, LATENT_DIM)
+    z_goal_exp = z_goal.expand(n_samples, -1)   # (n_samples, LATENT_DIM)
 
     best_l_seq = mu.unsqueeze(0)  # (1, H_hi, D) — fallback
 
@@ -157,8 +174,11 @@ def cem_high(
 
         z_final = z_traj[:, -1]  # (n_samples, D)
 
-        # L1 cost to goal
-        costs = F.l1_loss(z_final, z_goal_exp, reduction="none").sum(dim=-1)  # (n_samples,)
+        # Probe cost (lower = more likely to achieve goal) or fallback L1 to goal latent
+        if cost_fn is not None:
+            costs = torch.from_numpy(cost_fn(z_final.cpu().numpy())).to(device)
+        else:
+            costs = F.l1_loss(z_final, z_goal_exp, reduction="none").sum(dim=-1)  # (n_samples,)
 
         # Select elite
         elite_idx = torch.argsort(costs)[:n_elite]
@@ -335,8 +355,10 @@ def run_episode(
     """Run one HWM episode.
 
     Args:
-        cost_fn:             Optional probe cost callable for low-level CEM;
-                             see cem_low for signature.
+        cost_fn:             Optional probe cost callable; applied to both
+                             high-level CEM (subgoal selection) and low-level
+                             CEM (primitive action selection).  See cem_low
+                             for signature.
         goal_source_ep_idx:  Episode index (in latents.npz trajectory_boundaries)
                              of the human trajectory that achieved the goal.
                              Used only when oracle=True to locate the correct
@@ -394,6 +416,7 @@ def run_episode(
                     n_elite=n_elite_hi, n_iters=n_iters, device=device,
                     macro_action_mean=macro_action_mean,
                     macro_action_std=macro_action_std,
+                    cost_fn=cost_fn,
                 )
             steps_since_replan = 0
             if verbose:
