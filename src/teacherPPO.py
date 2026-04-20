@@ -391,10 +391,11 @@ if __name__ == '__main__':
                 cfg.update(section)
 
     # CLI overrides
-    ppo_save   = args.teacher_save_path  or cfg.get('teacher_save_path',  'ppo_teacher.pt')
+    ppo_save   = args.teacher_save_path  or cfg.get(
+        'teacher_save_path',  'data/crafter/ppo/ppo_teacher.pt')
     ckpt_path  = args.teacher_checkpoint or cfg.get('teacher_checkpoint', ppo_save)
     rollout_out = args.rollout_save_path or cfg.get(
-        'rollout_save_path', 'data/crafter_teacher_data.pkl')
+        'rollout_save_path', 'data/crafter/ppo_rollouts/crafter_teacher_data.pkl')
     n_ep       = args.n_episodes  or cfg.get('n_episodes',  5000)
     t_steps    = args.total_steps or cfg.get('ppo_total_steps', 500_000)
 

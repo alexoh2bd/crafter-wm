@@ -36,6 +36,7 @@ def cem_plan(
     n_elite: int = 50,
     n_iters: int = 5,
     device: torch.device = torch.device("cpu"),
+    cost_fn=None,
 ) -> int:
     """Run CEM over a horizon of H primitive actions and return the first action.
 
@@ -48,6 +49,9 @@ def cem_plan(
         n_elite:   Number of elite samples kept per iteration.
         n_iters:   Number of CEM refinement iterations.
         device:    Compute device.
+        cost_fn:   Optional callable (z_final_np: np.ndarray (n_samples, D))
+                   -> np.ndarray (n_samples,) of costs.  When None, falls back
+                   to L1 distance between z_final and z_goal (original behaviour).
 
     Returns:
         best_action (int): The first action in the optimal sequence.
@@ -75,8 +79,13 @@ def cem_plan(
 
         z_final = z_traj[:, -1]                                   # (n_samples, D)
 
-        # Cost = L1 distance to goal
-        costs = F.l1_loss(z_final, z_goal_exp, reduction="none").sum(dim=-1)  # (n_samples,)
+        # Cost: probe-based or L1 fallback
+        if cost_fn is not None:
+            costs = torch.from_numpy(
+                cost_fn(z_final.cpu().numpy())
+            ).to(device)                                          # (n_samples,)
+        else:
+            costs = F.l1_loss(z_final, z_goal_exp, reduction="none").sum(dim=-1)
 
         # Select elite
         elite_idx = torch.argsort(costs)[:n_elite]               # (n_elite,)
@@ -108,6 +117,7 @@ def run_episode(
     device: torch.device = torch.device("cpu"),
     verbose: bool = False,
     record_rollout: bool = False,
+    cost_fn=None,
 ) -> dict:
     """Run one flat-planner episode and return result dict.
 
@@ -121,6 +131,7 @@ def run_episode(
         device:             Compute device.
         verbose:            Print per-step info.
         record_rollout:     If True, include rollout_frames (T, H, W, 3) uint8.
+        cost_fn:            Optional probe cost callable; see cem_plan for signature.
 
     Returns:
         dict with keys: condition, achievement, seed, success, steps,
@@ -141,6 +152,7 @@ def run_episode(
     planning_times = []
     success = False
     prev_ach = {}
+    side_achievements: dict[str, int] = {}  # name -> step of first unlock
     rollout_frames: list | None = [] if record_rollout else None
     if rollout_frames is not None:
         rollout_frames.append(np.asarray(obs, dtype=np.uint8).copy())
@@ -157,6 +169,7 @@ def run_episode(
         action = cem_plan(
             lewm, z_curr, z_goal, H=H,
             n_samples=n_samples, n_elite=n_elite, n_iters=n_iters, device=device,
+            cost_fn=cost_fn,
         )
         planning_times.append((time.perf_counter() - t0) * 1000)
 
@@ -164,13 +177,18 @@ def run_episode(
         if rollout_frames is not None:
             rollout_frames.append(np.asarray(obs, dtype=np.uint8).copy())
 
-        # Check achievement
+        # Check achievements
         curr_ach = info.get("achievements", {})
         for k, v in curr_ach.items():
-            if v > prev_ach.get(k, 0) and k == target_achievement:
-                success = True
-                if verbose:
-                    print(f"  [flat] '{target_achievement}' achieved at step {step+1}")
+            if v > prev_ach.get(k, 0):
+                if k == target_achievement:
+                    success = True
+                    if verbose:
+                        print(f"  [flat] '{target_achievement}' achieved at step {step+1}")
+                elif k not in side_achievements:
+                    side_achievements[k] = step + 1
+                    if verbose:
+                        print(f"  [flat] side '{k}' at step {step+1}")
         prev_ach = dict(curr_ach)
 
         if done or success:
@@ -182,6 +200,7 @@ def run_episode(
         "seed": seed,
         "success": success,
         "steps": step + 1,
+        "side_achievements": side_achievements,
         "planning_ms_per_step": float(np.mean(planning_times)) if planning_times else 0.0,
     }
     if rollout_frames is not None:

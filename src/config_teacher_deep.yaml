@@ -17,7 +17,7 @@
 rollout_collection:
   method: teacher_ppo
 
-  rollout_save_path: data/crafter_teacher_data_deep.pkl
+  rollout_save_path: data/crafter/ppo_rollouts/crafter_teacher_data_deep.pkl
 
   # 2000 episodes of a well-trained teacher (avg ~1000–3000 steps each) gives
   # ~2M steps of dense-achievement data — plenty for world model training.
@@ -28,7 +28,7 @@ rollout_collection:
   # Set to 20 000 — well above any realistic survival length but safe from OOM.
   max_steps_per_episode: 20000
 
-  teacher_checkpoint: data/ppo_teacher_deep.pt
+  teacher_checkpoint: data/crafter/ppo/ppo_teacher_deep.pt
 
   # 5 % random noise keeps trajectories diverse; reduce to 0.02 for a
   # highly-trained teacher where variety matters less.
@@ -40,7 +40,7 @@ rollout_collection:
 
 # ── PPO teacher training (teacherPPO.py) ──────────────────────────────────────
 ppo:
-  teacher_save_path: data/ppo_teacher_deep.pt
+  teacher_save_path: data/crafter/ppo/ppo_teacher_deep.pt
 
   # 2M steps: the policy starts learning the survival loop (drink, eat, sleep).
   # 5M steps: consistent mid-to-late game coverage (iron tools, combat).
@@ -92,7 +92,7 @@ training:
 
 # ── Infrastructure ────────────────────────────────────────────────────────────
 infra:
-  logdir: logs/lewm_teacher_deep
+  logdir: data/crafter/world_model/lewm_teacher_deep
 
 # ── Weights & Biases ──────────────────────────────────────────────────────────
 wandb:

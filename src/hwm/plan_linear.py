@@ -156,10 +156,21 @@ def cem_plan_linear(
     n_elite: int = 50,
     n_iters: int = 5,
     rng: Optional[np.random.Generator] = None,
+    cost_fn=None,
 ) -> int:
     """CEM over H primitive actions using the linear dynamics model.
 
     Mirrors cem_plan() from plan_flat.py but operates entirely in numpy.
+
+    Args:
+        dynamics:  Fitted LinearDynamics model.
+        z_curr:    (D,) current latent state.
+        z_goal:    (D,) goal latent state.
+        ...CEM hyperparameters...
+        rng:       Optional numpy random generator.
+        cost_fn:   Optional callable (z_final_np: np.ndarray (n_samples, D))
+                   -> np.ndarray (n_samples,) of costs.  When None, falls back
+                   to L1 distance between z_final and z_goal (original behaviour).
 
     Returns:
         best_action (int): First action of the best sequence found.
@@ -181,10 +192,15 @@ def cem_plan_linear(
         ], axis=1)  # (n_samples, H)
 
         # Evaluate each sequence
-        costs = np.zeros(n_samples, dtype=np.float32)
-        for i in range(n_samples):
-            traj = dynamics.rollout(z_curr, a_samples[i])  # (H+1, D)
-            costs[i] = np.abs(z_goal - traj[-1]).sum()
+        z_finals = np.stack([
+            dynamics.rollout(z_curr, a_samples[i])[-1]
+            for i in range(n_samples)
+        ], axis=0)  # (n_samples, D)
+
+        if cost_fn is not None:
+            costs = cost_fn(z_finals)  # (n_samples,)
+        else:
+            costs = np.abs(z_goal[None] - z_finals).sum(axis=-1)  # (n_samples,)
 
         # Select elite samples
         elite_idx = np.argsort(costs)[:n_elite]
@@ -216,6 +232,7 @@ def run_episode(
     device: torch.device = torch.device("cpu"),
     verbose: bool = False,
     record_rollout: bool = False,
+    cost_fn=None,
 ) -> dict:
     """Run one linear-planner episode."""
     import crafter
@@ -234,6 +251,7 @@ def run_episode(
     planning_times = []
     success = False
     prev_ach = {}
+    side_achievements: dict[str, int] = {}  # name -> step of first unlock
     rollout_frames: list | None = [] if record_rollout else None
     if rollout_frames is not None:
         rollout_frames.append(np.asarray(obs, dtype=np.uint8).copy())
@@ -249,6 +267,7 @@ def run_episode(
         action = cem_plan_linear(
             dynamics, z_curr, z_goal,
             H=H, n_samples=n_samples, n_elite=n_elite, n_iters=n_iters, rng=rng,
+            cost_fn=cost_fn,
         )
         planning_times.append((time.perf_counter() - t0) * 1000)
 
@@ -258,10 +277,15 @@ def run_episode(
 
         curr_ach = info.get("achievements", {})
         for k, v in curr_ach.items():
-            if v > prev_ach.get(k, 0) and k == target_achievement:
-                success = True
-                if verbose:
-                    print(f"  [linear] '{target_achievement}' achieved at step {step+1}")
+            if v > prev_ach.get(k, 0):
+                if k == target_achievement:
+                    success = True
+                    if verbose:
+                        print(f"  [linear] '{target_achievement}' achieved at step {step+1}")
+                elif k not in side_achievements:
+                    side_achievements[k] = step + 1
+                    if verbose:
+                        print(f"  [linear] side '{k}' at step {step+1}")
         prev_ach = dict(curr_ach)
 
         if done or success:
@@ -273,6 +297,7 @@ def run_episode(
         "seed": seed,
         "success": success,
         "steps": step + 1,
+        "side_achievements": side_achievements,
         "planning_ms_per_step": float(np.mean(planning_times)) if planning_times else 0.0,
     }
     if rollout_frames is not None:

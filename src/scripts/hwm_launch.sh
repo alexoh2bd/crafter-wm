@@ -66,7 +66,7 @@ export NCCL_P2P_DISABLE=1
 export TORCH_ALLOW_TF32_CUBLAS_OVERRIDE=1
 
 # Install any missing deps (scikit-learn needed for plan_linear; wandb optional)
-pip install -q scikit-learn matplotlib
+pip install -q scikit-learn matplotlib moviepy imageio
 
 # Set WANDB=1 in the environment to enable wandb logging, e.g.:
 #   WANDB=1 sbatch src/scripts/hwm_launch.sh
@@ -74,52 +74,95 @@ WANDB_FLAG="--wandb"
 
 
 # ── Paths (relative to PROJECT_ROOT) ─────────────────────────────────────────
-CHECKPOINT="${PROJECT_ROOT}/logs/lewm_teacher_deep/best.pt"
-NPZ_DIR="${PROJECT_ROOT}/data/human_crafter"
-DATA_OUT="${PROJECT_ROOT}/data"
+BASE_CKPT="${PROJECT_ROOT}/data/crafter/world_model/lewm_teacher_deep/best.pt"
+HUMAN_FT_CKPT="${PROJECT_ROOT}/data/crafter/world_model/lewm_human_ft/best.pt"
+HUMAN_PKL="${PROJECT_ROOT}/data/crafter/human/crafter_human_train.pkl"
+# CHECKPOINT is set to the human-finetuned model after Step 0b completes.
+# All downstream steps (goal library, HWM training, eval) use this variable.
+CHECKPOINT="${HUMAN_FT_CKPT}"
+NPZ_DIR="${PROJECT_ROOT}/data/crafter/human"
+DATA_OUT="${PROJECT_ROOT}/data/crafter/wm_cache"
 GOAL_LIBRARY="${DATA_OUT}/goal_library.npz"
 TRAJ_DATASET="${DATA_OUT}/trajectory_dataset.npz"
 LATENTS_CACHE="${DATA_OUT}/latents.npz"
 RIDGE_MODEL="${DATA_OUT}/ridge_model.pkl"
-HWM_HIGH_LOGDIR="${PROJECT_ROOT}/logs/hwm_high"
+HWM_HIGH_LOGDIR="${PROJECT_ROOT}/data/crafter/world_model/hwm_high"
 HWM_HIGH_CKPT="${HWM_HIGH_LOGDIR}/best.pt"
 RESULTS_JSON="${PROJECT_ROOT}/results/results.json"
 
-mkdir -p "${PROJECT_ROOT}/logs/hwm_high"
+mkdir -p "${PROJECT_ROOT}/data/crafter/world_model/hwm_high"
 mkdir -p "${PROJECT_ROOT}/results"
 
-# ── Step 1: Build goal library ────────────────────────────────────────────────
-if [[ -f "${GOAL_LIBRARY}" && -f "${TRAJ_DATASET}" ]]; then
-    echo "Goal library and trajectory dataset already exist — skipping Step 1"
+# ── Purge stale artifacts from any previous run so everything is rebuilt
+# against the current checkpoint and the correct eval split. ──────────────────
+echo "Removing stale cache artifacts for clean rebuild..."
+rm -f "${GOAL_LIBRARY}" "${TRAJ_DATASET}" "${LATENTS_CACHE}" "${RIDGE_MODEL}"
+rm -f "${HWM_HIGH_LOGDIR}/best.pt" "${HWM_HIGH_LOGDIR}/latest.pt"
+rm -f "${DATA_OUT}/probes.pkl"
+
+# ── Step 0a: Build human training pkl ────────────────────────────────────────
+if [[ ! -f "${HUMAN_PKL}" ]]; then
+    echo "=== Step 0a: Building human training pkl ==="
+    python hwm/build_human_pkl.py \
+        --npz_dir  "${NPZ_DIR}" \
+        --out_path "${HUMAN_PKL}"
 else
-    echo "=== Step 1: Building goal library ==="
-    python hwm/build_goal_library.py \
-        --npz_dir "${NPZ_DIR}" \
-        --out_dir "${DATA_OUT}"
+    echo "=== Step 0a: Human pkl exists — skipping build ==="
 fi
+
+# ── Step 0b: Finetune LeWM on human data ─────────────────────────────────────
+echo "=== Step 0b: Finetuning LeWM on human data (frozen encoder, rollout loss) ==="
+mkdir -p "${PROJECT_ROOT}/data/crafter/world_model/lewm_human_ft"
+bash "${SRC_DIR}/scripts/train_wm_teach.sh" \
+    --config  "${SRC_DIR}/config_finetune_human.yaml" \
+    --data    "${HUMAN_PKL}" \
+    --resume  "${BASE_CKPT}"
+
+if [[ ! -f "${HUMAN_FT_CKPT}" ]]; then
+    echo "ERROR: Expected human-finetune checkpoint not found: ${HUMAN_FT_CKPT}"
+    exit 1
+fi
+echo "Human-finetune checkpoint: ${HUMAN_FT_CKPT}"
+
+# ── Step 1: Build goal library ────────────────────────────────────────────────
+echo "=== Step 1: Building goal library ==="
+python hwm/build_goal_library.py \
+    --npz_dir         "${NPZ_DIR}" \
+    --out_dir         "${DATA_OUT}" \
+    --eval_ep_indices 95 96 97 98 99
 
 # ── Step 2: Train HWM high-level modules ─────────────────────────────────────
-if [[ -f "${HWM_HIGH_CKPT}" ]]; then
-    echo "HWM high-level checkpoint already exists — skipping Step 2"
+echo "=== Step 2: Training ActionEncoder + HighLevelPredictor ==="
+python hwm/train_hwm_high.py \
+    --checkpoint     "${CHECKPOINT}" \
+    --traj_dataset   "${TRAJ_DATASET}" \
+    --latents_cache  "${LATENTS_CACHE}" \
+    --logdir         "${HWM_HIGH_LOGDIR}" \
+    --epochs         100 \
+    --batch_size     256 \
+    --lr             3e-4 \
+    --sigreg_lambda  0.2 \
+    --triplets_per_episode 200 \
+    --max_window     128 \
+    --max_subseq_len 32 \
+    --force_reencode \
+    ${WANDB_FLAG}
+
+# ── Step 3a: Fit achievement probes (diagnostic + cost function) ──────────────
+PROBE_PATH="${DATA_OUT}/probes.pkl"
+if [[ -f "${PROBE_PATH}" ]]; then
+    echo "Probe dict already exists — skipping Step 3a"
 else
-    echo "=== Step 2: Training ActionEncoder + HighLevelPredictor ==="
-    python hwm/train_hwm_high.py \
-        --checkpoint     "${CHECKPOINT}" \
-        --traj_dataset   "${TRAJ_DATASET}" \
+    echo "=== Step 3a: Fitting per-achievement linear probes ==="
+    python hwm/evaluate.py \
+        --fit_probes \
         --latents_cache  "${LATENTS_CACHE}" \
-        --logdir         "${HWM_HIGH_LOGDIR}" \
-        --epochs         100 \
-        --batch_size     256 \
-        --lr             3e-4 \
-        --sigreg_lambda  0.2 \
-        --triplets_per_episode 200 \
-        --max_window     128 \
-        --max_subseq_len 32 \
-        ${WANDB_FLAG}
+        --npz_dir        "${NPZ_DIR}" \
+        --probe_path     "${PROBE_PATH}"
 fi
 
-# ── Step 3: Evaluate all conditions ──────────────────────────────────────────
-echo "=== Step 3: Evaluating all conditions (50 episodes each) ==="
+# ── Step 3b: Evaluate all conditions with probe cost ─────────────────────────
+echo "=== Step 3b: Evaluating all conditions (50 episodes each) ==="
 python hwm/evaluate.py \
     --condition      all \
     --checkpoint     "${CHECKPOINT}" \
@@ -129,9 +172,12 @@ python hwm/evaluate.py \
     --latents_cache  "${LATENTS_CACHE}" \
     --traj_dataset   "${TRAJ_DATASET}" \
     --results_path   "${RESULTS_JSON}" \
-    --n_episodes     50 \
+    --n_episodes     65 \
     --seed_start     100 \
     --max_steps      1000 \
+    --cost           probe \
+    --probe_path     "${PROBE_PATH}" \
+    --n_workers      4 \
     ${WANDB_FLAG}
 
 # ── Step 4: Generate figures ──────────────────────────────────────────────────

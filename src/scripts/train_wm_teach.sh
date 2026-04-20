@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=lewm_teacher
 #SBATCH --partition=compsci-gpu
-#SBATCH --gres=gpu:a5000:1
+#SBATCH --gres=gpu:rtx_pro_6000:1
 #SBATCH --cpus-per-task=10
 #SBATCH --mem=48G
 #SBATCH --time=3-00:00:00
@@ -64,11 +64,13 @@ fi
 CONFIG="${SRC_DIR}/config_teacher_deep.yaml"
 # Default teacher rollouts (repo layout: data/crafter/…)
 DATA_PATH="$(resolve_repo_path "data/crafter/crafter_teacher_data.pkl")"
+RESUME_PATH=""
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --config) CONFIG="$2"; shift 2 ;;
         --data)   DATA_PATH="$(resolve_repo_path "$2")"; shift 2 ;;
+        --resume) RESUME_PATH="$(resolve_repo_path "$2")"; shift 2 ;;
         *) echo "Unknown arg: $1"; exit 1 ;;
     esac
 done
@@ -128,7 +130,8 @@ echo "================================================================"
     --config    "${CONFIG}" \
     --data_path "${DATA_PATH}" \
     --logdir    "${LOGDIR}" \
-    --use_wandb
+    --use_wandb \
+    ${RESUME_PATH:+--resume "${RESUME_PATH}"}
 
 echo "Checkpoints: ${LOGDIR}/best.pt"
 echo "================================================================"

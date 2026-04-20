@@ -7,6 +7,7 @@ Low-level CEM (integer, categorical) over H_lo=10 primitive actions,
 
 Replanning schedule:
   - High-level reruns every H_lo steps OR when ‖z_curr - z_subgoal‖₁ < threshold
+    (threshold=2.0 ≈ p75 of adjacent within-episode L1 in latents.npz)
   - Low-level reruns every step (receding-horizon MPC)
 
 Oracle ablation mode (--oracle):
@@ -53,8 +54,17 @@ from hwm.models import (
 def load_hwm_high(
     ckpt_path: str = HWM_HIGH_CKPT,
     device: torch.device = torch.device("cpu"),
-) -> tuple[ActionEncoder, HighLevelPredictor]:
-    """Load trained ActionEncoder and HighLevelPredictor from checkpoint."""
+) -> tuple[ActionEncoder, HighLevelPredictor, torch.Tensor, torch.Tensor]:
+    """Load trained ActionEncoder and HighLevelPredictor from checkpoint.
+
+    Returns:
+        action_enc:  Frozen ActionEncoder.
+        high_pred:   Frozen HighLevelPredictor.
+        macro_mean:  (D,) empirical mean of ActionEncoder outputs.
+                     Falls back to zeros if not present in checkpoint (pre-patch ckpts).
+        macro_std:   (D,) empirical std of ActionEncoder outputs.
+                     Falls back to ones if not present in checkpoint (pre-patch ckpts).
+    """
     ckpt = torch.load(ckpt_path, map_location=device)
     saved_args = ckpt.get("args", {})
 
@@ -80,7 +90,10 @@ def load_hwm_high(
     for p in high_pred.parameters():
         p.requires_grad_(False)
 
-    return action_enc, high_pred
+    macro_mean = ckpt.get("macro_action_mean", torch.zeros(LATENT_DIM)).to(device)
+    macro_std  = ckpt.get("macro_action_std",  torch.ones(LATENT_DIM)).to(device)
+
+    return action_enc, high_pred, macro_mean, macro_std
 
 
 # ── High-level CEM (continuous Gaussian over macro-actions) ───────────────────
@@ -94,17 +107,21 @@ def cem_high(
     n_elite: int = 30,
     n_iters: int = 5,
     device: torch.device = torch.device("cpu"),
+    macro_action_mean: Optional[torch.Tensor] = None,
+    macro_action_std: Optional[torch.Tensor] = None,
 ) -> tuple[torch.Tensor, torch.Tensor]:
     """Continuous Gaussian CEM over H_hi macro-actions.
 
     Args:
-        high_pred: Frozen HighLevelPredictor.
-        z_curr:    (1, D) current latent state.
-        z_goal:    (1, D) goal latent state.
-        H_hi:      High-level planning horizon (number of macro-actions).
-        n_samples: CEM population size.
-        n_elite:   Number of elite samples.
-        n_iters:   CEM refinement iterations.
+        high_pred:          Frozen HighLevelPredictor.
+        z_curr:             (1, D) current latent state.
+        z_goal:             (1, D) goal latent state.
+        H_hi:               High-level planning horizon (number of macro-actions).
+        n_samples:          CEM population size.
+        n_elite:            Number of elite samples.
+        n_iters:            CEM refinement iterations.
+        macro_action_mean:  (D,) empirical mean to initialise mu (default: zeros).
+        macro_action_std:   (D,) empirical std to initialise sigma (default: ones).
 
     Returns:
         best_l_seq: (1, H_hi, D) optimal macro-action sequence.
@@ -112,9 +129,17 @@ def cem_high(
     """
     D = LATENT_DIM
 
-    # Initialize Gaussian distribution over macro-action sequences
-    mu    = torch.zeros(H_hi, D, device=device)
-    sigma = torch.ones(H_hi, D, device=device)
+    # Seed the Gaussian prior from the empirical macro-action distribution so that
+    # the initial CEM samples are already on-manifold instead of N(0, I).
+    if macro_action_mean is not None:
+        mu = macro_action_mean.to(device).unsqueeze(0).expand(H_hi, -1).clone()
+    else:
+        mu = torch.zeros(H_hi, D, device=device)
+
+    if macro_action_std is not None:
+        sigma = macro_action_std.to(device).unsqueeze(0).expand(H_hi, -1).clone()
+    else:
+        sigma = torch.ones(H_hi, D, device=device)
 
     z_curr_exp = z_curr.expand(n_samples, -1)   # (n_samples, D)
     z_goal_exp = z_goal.expand(n_samples, -1)   # (n_samples, D)
@@ -167,8 +192,15 @@ def cem_low(
     n_elite: int = 50,
     n_iters: int = 5,
     device: torch.device = torch.device("cpu"),
+    cost_fn=None,
 ) -> int:
-    """Low-level CEM over H primitive actions targeting z_subgoal."""
+    """Low-level CEM over H primitive actions targeting z_subgoal.
+
+    Args:
+        cost_fn: Optional callable (z_final_np: np.ndarray (n_samples, D))
+                 -> np.ndarray (n_samples,) of costs.  When None, falls back
+                 to L1 distance between z_final and z_subgoal.
+    """
     logits = torch.zeros(H, ACTION_DIM, device=device)
 
     z_curr_exp    = z_curr.expand(n_samples, -1)
@@ -187,7 +219,13 @@ def cem_low(
             z_traj = lewm.rollout(z_curr_exp, a_oh)  # (n_samples, H+1, D)
 
         z_final = z_traj[:, -1]
-        costs = F.l1_loss(z_final, z_subgoal_exp, reduction="none").sum(dim=-1)
+
+        if cost_fn is not None:
+            costs = torch.from_numpy(
+                cost_fn(z_final.cpu().numpy())
+            ).to(device)
+        else:
+            costs = F.l1_loss(z_final, z_subgoal_exp, reduction="none").sum(dim=-1)
 
         elite_idx    = torch.argsort(costs)[:n_elite]
         elite_actions = a_samples[elite_idx]
@@ -204,16 +242,30 @@ def cem_low(
 def get_oracle_subgoal(
     lewm,
     goal_achievement_step: int,
-    current_step: int,
     traj_dataset_path: str,
     latents_path: str,
     device: torch.device,
+    source_ep_idx: int = 0,
+    current_step: int = 0,
 ) -> torch.Tensor:
-    """Return z_subgoal from the midpoint frame of a human playthrough.
+    """Return z_subgoal from the dynamic midpoint of the source human playthrough.
 
-    Midpoint = (current_step + goal_achievement_step) // 2 timestep in
-    the trajectory that achieved the goal earliest.  Uses pre-encoded
-    latents if available, otherwise encodes the raw frame on-the-fly.
+    Midpoint = halfway between *current_step* and *goal_achievement_step* within
+    the source episode, so the oracle subgoal advances as the episode progresses
+    rather than always pointing to the fixed episode-start midpoint.
+    Uses pre-encoded latents when available, otherwise encodes on-the-fly.
+
+    Args:
+        lewm:                  Frozen LeWM encoder (used only for on-the-fly fallback).
+        goal_achievement_step: Step *within* the source episode at which the
+                               achievement was first unlocked.
+        traj_dataset_path:     Path to trajectory_dataset.npz (fallback).
+        latents_path:          Path to latents.npz (preferred).
+        device:                Compute device.
+        source_ep_idx:         Index into trajectory_boundaries that identifies
+                               the source episode in the concatenated dataset.
+        current_step:          Current step of the running episode; used to
+                               compute the dynamic midpoint towards the goal.
 
     Returns:
         z_subgoal: (1, D) tensor on device.
@@ -222,21 +274,32 @@ def get_oracle_subgoal(
     lp = _P(latents_path)
     if lp.exists():
         d = np.load(latents_path)
-        Z           = d["Z"]
-        boundaries  = d["trajectory_boundaries"]
+        Z          = d["Z"]
+        boundaries = d["trajectory_boundaries"]
     else:
         # Fallback: re-encode on-the-fly (slow)
         td = np.load(traj_dataset_path)
-        obs = td["obs"]
+        obs        = td["obs"]
         boundaries = td["trajectory_boundaries"]
         batch = torch.from_numpy(obs).float() / 255.0
         batch = batch.permute(0, 3, 1, 2).to(device)
         with torch.no_grad():
             Z = lewm.encode(batch).cpu().numpy()
 
-    mid_step = (current_step + goal_achievement_step) // 2
-    mid_step = max(0, min(mid_step, len(Z) - 1))
-    z_mid = torch.from_numpy(Z[mid_step].copy()).float().unsqueeze(0).to(device)
+    # Locate the correct episode's start and end in the concatenated Z array
+    ep_start = int(boundaries[source_ep_idx])
+    if source_ep_idx + 1 < len(boundaries):
+        ep_end = int(boundaries[source_ep_idx + 1])
+    else:
+        ep_end = len(Z)
+
+    # Dynamic midpoint: halfway between current_step and goal_achievement_step
+    # so the oracle subgoal tracks progress through the episode.
+    mid_within_ep = (current_step + goal_achievement_step) // 2
+    abs_idx = ep_start + mid_within_ep
+    abs_idx = max(ep_start, min(abs_idx, ep_end - 1))
+
+    z_mid = torch.from_numpy(Z[abs_idx].copy()).float().unsqueeze(0).to(device)
     return z_mid
 
 
@@ -257,15 +320,28 @@ def run_episode(
     n_elite_hi: int = 30,
     n_elite_lo: int = 50,
     n_iters: int = 5,
-    subgoal_threshold: float = 5.0,
+    subgoal_threshold: float = 2.0,
     device: torch.device = torch.device("cpu"),
     oracle: bool = False,
     traj_dataset_path: str = TRAJ_DATASET,
     latents_path: str = LATENTS_CACHE,
     verbose: bool = False,
     record_rollout: bool = False,
+    cost_fn=None,
+    goal_source_ep_idx: int = 0,
+    macro_action_mean: Optional[torch.Tensor] = None,
+    macro_action_std: Optional[torch.Tensor] = None,
 ) -> dict:
-    """Run one HWM episode."""
+    """Run one HWM episode.
+
+    Args:
+        cost_fn:             Optional probe cost callable for low-level CEM;
+                             see cem_low for signature.
+        goal_source_ep_idx:  Episode index (in latents.npz trajectory_boundaries)
+                             of the human trajectory that achieved the goal.
+                             Used only when oracle=True to locate the correct
+                             midpoint latent.
+    """
     import crafter
     import time
 
@@ -283,6 +359,7 @@ def run_episode(
     planning_times = []
     success = False
     prev_ach = {}
+    side_achievements: dict[str, int] = {}  # name -> step of first unlock
     rollout_frames: list | None = [] if record_rollout else None
     if rollout_frames is not None:
         rollout_frames.append(np.asarray(obs, dtype=np.uint8).copy())
@@ -305,14 +382,18 @@ def run_episode(
         if need_replan:
             if oracle:
                 z_subgoal = get_oracle_subgoal(
-                    lewm, goal_achievement_step, step,
+                    lewm, goal_achievement_step,
                     traj_dataset_path, latents_path, device,
+                    source_ep_idx=goal_source_ep_idx,
+                    current_step=step,
                 )
             else:
                 _, z_subgoal = cem_high(
                     high_pred, z_curr, z_goal,
                     H_hi=H_hi, n_samples=n_samples_hi,
                     n_elite=n_elite_hi, n_iters=n_iters, device=device,
+                    macro_action_mean=macro_action_mean,
+                    macro_action_std=macro_action_std,
                 )
             steps_since_replan = 0
             if verbose:
@@ -325,6 +406,7 @@ def run_episode(
             lewm, z_curr, z_subgoal,
             H=H_lo, n_samples=n_samples_lo,
             n_elite=n_elite_lo, n_iters=n_iters, device=device,
+            cost_fn=cost_fn,
         )
         planning_times.append((time.perf_counter() - t0) * 1000)
         steps_since_replan += 1
@@ -335,11 +417,17 @@ def run_episode(
 
         curr_ach = info.get("achievements", {})
         for k, v in curr_ach.items():
-            if v > prev_ach.get(k, 0) and k == target_achievement:
-                success = True
-                if verbose:
-                    print(f"  [hwm{'_oracle' if oracle else ''}] "
-                          f"'{target_achievement}' achieved at step {step+1}")
+            if v > prev_ach.get(k, 0):
+                if k == target_achievement:
+                    success = True
+                    if verbose:
+                        print(f"  [hwm{'_oracle' if oracle else ''}] "
+                              f"'{target_achievement}' achieved at step {step+1}")
+                elif k not in side_achievements:
+                    side_achievements[k] = step + 1
+                    if verbose:
+                        print(f"  [hwm{'_oracle' if oracle else ''}] "
+                              f"side '{k}' at step {step+1}")
         prev_ach = dict(curr_ach)
 
         if done or success:
@@ -351,6 +439,7 @@ def run_episode(
         "seed": seed,
         "success": success,
         "steps": step + 1,
+        "side_achievements": side_achievements,
         "planning_ms_per_step": float(np.mean(planning_times)) if planning_times else 0.0,
     }
     if rollout_frames is not None:
@@ -379,14 +468,16 @@ def main() -> None:
     parser.add_argument("--n_elite_hi",    type=int,   default=30)
     parser.add_argument("--n_elite_lo",    type=int,   default=50)
     parser.add_argument("--n_iters",       type=int,   default=5)
-    parser.add_argument("--threshold",     type=float, default=5.0)
+    parser.add_argument("--threshold",     type=float, default=2.0)
     parser.add_argument("--oracle",        action="store_true",
                         help="Use oracle subgoals from human trajectories")
     args = parser.parse_args()
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     lewm, _ = load_lewm(args.checkpoint, device=device)
-    action_enc, high_pred = load_hwm_high(args.hwm_checkpoint, device=device)
+    action_enc, high_pred, macro_mean, macro_std = load_hwm_high(
+        args.hwm_checkpoint, device=device
+    )
 
     gl = np.load(args.goal_library, allow_pickle=True)
     goal_names = list(gl["goal_names"])
@@ -410,6 +501,8 @@ def main() -> None:
             traj_dataset_path=args.traj_dataset,
             latents_path=args.latents_cache,
             verbose=True,
+            macro_action_mean=macro_mean,
+            macro_action_std=macro_std,
         )
         print(result)
 

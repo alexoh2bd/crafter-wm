@@ -5,6 +5,8 @@ Predictor: Causal Transformer with AdaLN action conditioning
 Loss: MSE + SIGReg(lambda=0.1)
 """
 
+import random
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -319,6 +321,14 @@ class LeWM(nn.Module):
 
         self.sigreg = SIGReg(embed_dim=latent_dim, M=sigreg_M)
 
+        # Empirical mean norm of encoder outputs used to rescale predicted
+        # latents during open-loop rollout, keeping them on the same scale as
+        # real encoded frames (computed from data/latents.npz: ~20.92).
+        self.register_buffer(
+            'latent_scale',
+            torch.tensor(20.92, dtype=torch.float32),
+        )
+
     def encode(self, obs):
         """obs: (B, C, H, W) -> z: (B, latent_dim)"""
         return self.encoder(obs)
@@ -331,11 +341,15 @@ class LeWM(nn.Module):
         """
         return self.predictor(z_seq, a_seq)
 
-    def forward(self, obs_seq, a_seq):
+    def forward(self, obs_seq, a_seq, rollout_steps: int = 0,
+                rollout_loss_weight: float = 0.1):
         """
         obs_seq: (B, T, C, H, W)
         a_seq:   (B, T, action_dim)
-        Returns dict with loss, pred_loss, sigreg_loss
+        rollout_steps:       Number of open-loop steps for the rollout loss
+                             (0 = disabled, backward-compatible default).
+        rollout_loss_weight: Weight applied to rollout_loss in total_loss.
+        Returns dict with loss, pred_loss, sigreg_loss[, rollout_loss]
         """
         B, T, C, H, W = obs_seq.shape
 
@@ -364,13 +378,37 @@ class LeWM(nn.Module):
 
         total_loss = pred_loss + self.sigreg_lambda * sigreg_loss
 
-        return {
+        # Optional multi-step open-loop rollout loss.
+        # Unrolls the predictor open-loop for rollout_steps steps starting
+        # from a random position, applying the same norm rescaling used at
+        # inference, supervised against ground-truth encoded latents.
+        # This closes the teacher-forcing / open-loop distribution gap.
+        rollout_loss_val = 0.0
+        if rollout_steps > 0 and T > rollout_steps + 1:
+            s = random.randint(0, T - rollout_steps - 1)
+            z_r = z_seq[:, s]                                     # (B, D)
+            acc = torch.tensor(0.0, device=obs_seq.device)
+            for k in range(rollout_steps):
+                z_r = self.predictor(
+                    z_r.unsqueeze(1),
+                    a_seq[:, s + k].unsqueeze(1),
+                )[:, -1]                                          # (B, D)
+                z_r = F.normalize(z_r, dim=-1) * self.latent_scale
+                acc = acc + F.mse_loss(z_r, z_seq[:, s + k + 1].detach())
+            rollout_loss = acc / rollout_steps
+            total_loss = total_loss + rollout_loss_weight * rollout_loss
+            rollout_loss_val = rollout_loss.item()
+
+        out = {
             'loss': total_loss,
             'pred_loss': pred_loss.item(),
             'sigreg_loss': sigreg_loss.item(),
             'z_seq': z_seq,
             'z_hat': z_hat,
         }
+        if rollout_steps > 0:
+            out['rollout_loss'] = rollout_loss_val
+        return out
 
     @torch.no_grad()
     def rollout(self, z0, a_seq):
@@ -379,15 +417,30 @@ class LeWM(nn.Module):
         z0:    (B, latent_dim) — initial latent
         a_seq: (B, H, action_dim) — action sequence to evaluate
         Returns z_pred: (B, H+1, latent_dim)
+
+        Fixes vs original:
+        - Sliding context window: history fed to the predictor is clamped to
+          the last context_len frames so positional embeddings are never
+          addressed out of range.
+        - Norm stabilisation: each predicted latent is rescaled to
+          latent_scale (empirical mean encoder-output norm) before being
+          appended to the history, preventing the scale explosion observed in
+          open-loop evaluation (open-loop MSE ~4B vs teacher-forced ~0.2).
         """
         B, H, _ = a_seq.shape
+        ctx = self.predictor.context_len
         z_history = [z0]
 
         for t in range(H):
-            z_stack = torch.stack(z_history, dim=1)  # (B, t+1, D)
-            a_stack = a_seq[:, :t+1]                 # (B, t+1, A)
-            z_hat = self.predictor(z_stack, a_stack) # (B, t+1, D)
-            z_next = z_hat[:, -1]                    # (B, D)
+            # Clamp history to the last ctx frames to respect pos embeddings
+            window = z_history[-ctx:]
+            z_stack = torch.stack(window, dim=1)             # (B, W, D)
+            a_start = max(0, t + 1 - ctx)
+            a_stack = a_seq[:, a_start:t + 1]                # (B, W, A)
+            z_hat = self.predictor(z_stack, a_stack)         # (B, W, D)
+            z_next = z_hat[:, -1]                            # (B, D)
+            # Rescale to encoder-output norm to prevent scale drift
+            z_next = F.normalize(z_next, dim=-1) * self.latent_scale
             z_history.append(z_next)
 
         return torch.stack(z_history, dim=1)  # (B, H+1, D)

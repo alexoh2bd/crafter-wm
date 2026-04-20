@@ -273,7 +273,10 @@ def load_lewm(
         dropout        = saved.get("dropout",         0.1),
     ).to(device)
 
-    model.load_state_dict(ckpt["model"])
+    # strict=False: latent_scale was added as a registered buffer after some
+    # checkpoints were saved; if it is absent the constructor default (20.92)
+    # is already correct.
+    model.load_state_dict(ckpt["model"], strict=False)
     model.eval()
 
     # Freeze all parameters — this model is never trained further

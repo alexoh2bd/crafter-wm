@@ -46,6 +46,7 @@ from hwm.constants import (
     CHECKPOINT,
     LATENT_DIM,
     LATENTS_CACHE,
+    PROJECT_ROOT,
     TRAJ_DATASET,
     HWM_HIGH_CKPT,
 )
@@ -183,6 +184,10 @@ def train(args: argparse.Namespace) -> None:
     np.random.seed(args.seed)
 
     # ── Pre-encode ───────────────────────────────────────────────────────────
+    if getattr(args, "force_reencode", False) and Path(args.latents_cache).exists():
+        print(f"--force_reencode: removing stale cache {args.latents_cache}")
+        Path(args.latents_cache).unlink()
+
     Z, actions, boundaries = precompute_latents(
         traj_dataset_path=args.traj_dataset,
         latents_path=args.latents_cache,
@@ -372,6 +377,31 @@ def train(args: argparse.Namespace) -> None:
         log_dir / "latest.pt",
     )
 
+    # Compute empirical macro-action distribution for cem_high initialisation.
+    # A single post-training pass over the full dataset collects all ActionEncoder
+    # outputs.  mean/std are saved into both checkpoints so cem_high can seed its
+    # Gaussian prior from the actual output distribution instead of N(0, I).
+    print("Computing empirical macro-action mean/std (post-training pass)...")
+    action_enc.eval()
+    all_l: list[torch.Tensor] = []
+    with torch.no_grad():
+        for z1, l1_a, z2, l2_a, z3 in loader:
+            l1_a = l1_a.to(device)
+            l2_a = l2_a.to(device)
+            all_l.append(action_enc(l1_a).cpu())
+            all_l.append(action_enc(l2_a).cpu())
+    all_l_cat = torch.cat(all_l, dim=0)                         # (N_total, D)
+    macro_mean = all_l_cat.mean(dim=0)                          # (D,)
+    macro_std  = all_l_cat.std(dim=0).clamp(min=1e-4)          # (D,)
+
+    for ckpt_path in [log_dir / "best.pt", log_dir / "latest.pt"]:
+        if ckpt_path.exists():
+            ckpt_data = torch.load(ckpt_path, map_location="cpu")
+            ckpt_data["macro_action_mean"] = macro_mean
+            ckpt_data["macro_action_std"]  = macro_std
+            torch.save(ckpt_data, ckpt_path)
+            print(f"  Patched {ckpt_path.name} with macro-action stats")
+
     if wandb_run is not None:
         _wandb.summary["best_loss"] = best_val_loss
         _wandb.finish()
@@ -390,7 +420,7 @@ def main() -> None:
     parser.add_argument("--traj_dataset",         default=TRAJ_DATASET)
     parser.add_argument("--latents_cache",        default=LATENTS_CACHE)
     parser.add_argument("--logdir",               default=str(
-        Path(__file__).resolve().parent.parent.parent / "logs" / "hwm_high"))
+        PROJECT_ROOT / "data" / "crafter" / "world_model" / "hwm_high"))
     parser.add_argument("--epochs",               type=int,   default=30)
     parser.add_argument("--batch_size",           type=int,   default=256)
     parser.add_argument("--lr",                   type=float, default=3e-4)
@@ -406,6 +436,10 @@ def main() -> None:
                         help="Enable Weights & Biases logging")
     parser.add_argument("--wandb_project",        default="lewm-crafter")
     parser.add_argument("--wandb_run_name",       default=None)
+    parser.add_argument("--force_reencode",       action="store_true",
+                        help="Delete cached latents.npz and re-encode from "
+                             "trajectory_dataset.npz (use after rebuilding the dataset "
+                             "with a new train/eval split)")
     args = parser.parse_args()
     train(args)
 

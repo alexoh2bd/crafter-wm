@@ -33,6 +33,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from hwm.constants import (
     ACHIEVEMENT_NAMES,
     DATA_OUT,
+    EVAL_EP_INDICES,
     GOAL_LIBRARY,
     NPZ_DIR,
     TRAJ_DATASET,
@@ -46,7 +47,11 @@ def _load_npz(path: str) -> dict:
     return {k: d[k] for k in d.files}
 
 
-def build_goal_library(npz_dir: str, out_dir: str) -> None:
+def build_goal_library(
+    npz_dir: str,
+    out_dir: str,
+    eval_ep_indices: tuple[int, ...] | list[int] = (),
+) -> None:
     out_path = Path(out_dir)
     out_path.mkdir(parents=True, exist_ok=True)
 
@@ -55,27 +60,30 @@ def build_goal_library(npz_dir: str, out_dir: str) -> None:
         raise FileNotFoundError(f"No .npz files found in {npz_dir}")
     print(f"Found {len(npz_files)} trajectory files.")
 
+    eval_set = set(eval_ep_indices)
+    if eval_set:
+        print(f"Holding out eval episodes: {sorted(eval_set)}  "
+              f"({len(eval_set)} episodes excluded from trajectory_dataset.npz)")
+
     # ── Pass 1: find best (earliest first-unlock) frame per achievement ───────
-    # best[name] = {'frame': np.ndarray, 'step': int, 'file': str}
+    # Scans ALL episodes (including eval) so the goal library has the best frames.
+    # best[name] = {'frame': np.ndarray, 'step': int, 'file': str, 'ep_idx': int}
     best: dict[str, dict] = {}
 
+    # Train-only accumulators for trajectory_dataset.npz
     all_obs: list[np.ndarray] = []
     all_actions: list[np.ndarray] = []
     boundaries: list[int] = []
     total = 0
 
-    for fpath in npz_files:
+    for ep_i, fpath in enumerate(npz_files):
         d = _load_npz(str(fpath))
 
         images  = d["image"]   # (T, 64, 64, 3) uint8
         actions = d["action"]  # (T,) int64
         T = len(images)
 
-        boundaries.append(total)
-        all_obs.append(images)
-        all_actions.append(actions)
-        total += T
-
+        # Goal-frame pass: always (all 100 episodes)
         for name in ACHIEVEMENT_NAMES:
             col = d[ach_key(name)]                   # (T,) cumulative count
             diffs = np.diff(col.astype(np.int64), prepend=0)  # (T,)
@@ -91,27 +99,37 @@ def build_goal_library(npz_dir: str, out_dir: str) -> None:
                 # Goal frame = the frame at the unlock moment (boundary-safe)
                 frame_idx = min(max(0, t), T - 1)
                 best[name] = {
-                    "frame": images[frame_idx].copy(),
-                    "step":  t,
-                    "file":  fpath.name,
+                    "frame":  images[frame_idx].copy(),
+                    "step":   t,
+                    "file":   fpath.name,
+                    "ep_idx": ep_i,
                 }
+
+        # Trajectory dataset pass: train episodes only
+        if ep_i not in eval_set:
+            boundaries.append(total)
+            all_obs.append(images)
+            all_actions.append(actions)
+            total += T
 
     print(f"\nTotal frames: {total}")
     print(f"Achievements with at least one unlock: {len(best)}/{len(ACHIEVEMENT_NAMES)}")
 
     # ── Build goal_library arrays ─────────────────────────────────────────────
     H, W = 64, 64
-    goal_frames = np.zeros((len(ACHIEVEMENT_NAMES), H, W, 3), dtype=np.uint8)
-    goal_steps  = np.full(len(ACHIEVEMENT_NAMES), -1, dtype=np.int64)
-    goal_files  = np.array([""] * len(ACHIEVEMENT_NAMES), dtype=object)
-    goal_names  = np.array(ACHIEVEMENT_NAMES, dtype=object)
+    goal_frames   = np.zeros((len(ACHIEVEMENT_NAMES), H, W, 3), dtype=np.uint8)
+    goal_steps    = np.full(len(ACHIEVEMENT_NAMES), -1, dtype=np.int64)
+    goal_files    = np.array([""] * len(ACHIEVEMENT_NAMES), dtype=object)
+    goal_ep_idxs  = np.full(len(ACHIEVEMENT_NAMES), -1, dtype=np.int64)
+    goal_names    = np.array(ACHIEVEMENT_NAMES, dtype=object)
 
     for i, name in enumerate(ACHIEVEMENT_NAMES):
         if name in best:
-            goal_frames[i] = best[name]["frame"]
-            goal_steps[i]  = best[name]["step"]
-            goal_files[i]  = best[name]["file"]
-            print(f"  {name:30s}: t={best[name]['step']:4d}  ({best[name]['file']})")
+            goal_frames[i]  = best[name]["frame"]
+            goal_steps[i]   = best[name]["step"]
+            goal_files[i]   = best[name]["file"]
+            goal_ep_idxs[i] = best[name]["ep_idx"]
+            print(f"  {name:30s}: t={best[name]['step']:4d}  ep={best[name]['ep_idx']:3d}  ({best[name]['file']})")
         else:
             print(f"  {name:30s}: NOT FOUND — leaving frame blank (all zeros)")
 
@@ -122,6 +140,7 @@ def build_goal_library(npz_dir: str, out_dir: str) -> None:
         goal_names=goal_names,
         goal_achievement_steps=goal_steps,
         goal_source_files=goal_files,
+        goal_source_ep_idxs=goal_ep_idxs,
     )
     print(f"\nSaved goal library → {goal_lib_path}")
 
@@ -151,8 +170,12 @@ def main() -> None:
                         help="Directory containing human playthrough .npz files")
     parser.add_argument("--out_dir", default=DATA_OUT,
                         help="Output directory for generated .npz files")
+    parser.add_argument("--eval_ep_indices", type=int, nargs="*",
+                        default=EVAL_EP_INDICES,
+                        help="0-based episode indices (by NPZ sort order) to hold out of "
+                             "trajectory_dataset.npz. Goal library still scans all episodes.")
     args = parser.parse_args()
-    build_goal_library(args.npz_dir, args.out_dir)
+    build_goal_library(args.npz_dir, args.out_dir, eval_ep_indices=args.eval_ep_indices)
 
 
 if __name__ == "__main__":

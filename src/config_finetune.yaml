@@ -1,0 +1,63 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# LeWM finetune config — closes teacher-forcing / open-loop distribution gap
+#
+# Usage:
+#   sbatch src/scripts/train_wm_teach.sh \
+#       --config src/config_finetune.yaml \
+#       --data   data/crafter/ppo_rollouts/crafter_teacher_data.pkl
+#
+# Or directly:
+#   python src/letrain.py \
+#       --config  src/config_finetune.yaml \
+#       --data_path data/crafter/ppo_rollouts/crafter_teacher_data.pkl \
+#       --resume  data/crafter/world_model/lewm_teacher_deep/best.pt
+# ─────────────────────────────────────────────────────────────────────────────
+
+# ── Dataset / sequencing ──────────────────────────────────────────────────────
+dataset:
+  context_len: 16
+  img_size: 64
+
+# ── LeWM model architecture (must match the checkpoint being resumed) ─────────
+model:
+  latent_dim: 256
+  patch_size: 8
+  encoder_depth: 12
+  encoder_heads: 3
+  predictor_depth: 6
+  predictor_heads: 16
+  sigreg_M: 1024
+  sigreg_lambda: 0.1
+  dropout: 0.1
+
+# ── Training ──────────────────────────────────────────────────────────────────
+training:
+  epochs: 15
+  batch_size: 128
+  lr: 1.0e-4          # lower LR — finetuning, not training from scratch
+  weight_decay: 1.0e-4
+  warmup_steps: 200
+  total_steps: 50000
+  log_every: 50
+  seed: 0
+
+  # Multi-step rollout loss: unrolls the predictor open-loop for 4 steps and
+  # supervises against ground-truth encoded latents with the same norm clamp
+  # used at inference. Closes the teacher-forcing / autoregressive gap.
+  rollout_steps: 4
+  rollout_loss_weight: 0.1
+
+  # Freeze encoder — only the predictor is updated during finetune so the
+  # encoder representations (which score AUC 0.987 on collect_wood) are not
+  # disturbed.
+  freeze_encoder: true
+
+# ── Infrastructure ────────────────────────────────────────────────────────────
+infra:
+  logdir: data/crafter/world_model/lewm_teacher_deep_ft
+
+# ── Weights & Biases ──────────────────────────────────────────────────────────
+wandb:
+  use_wandb: true
+  wandb_project: lewm-crafter
+  wandb_run_name: lewm-finetune-rollout

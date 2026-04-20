@@ -11,16 +11,20 @@ from pathlib import Path
 _HERE = Path(__file__).resolve()
 PROJECT_ROOT = _HERE.parent.parent.parent  # plan/
 
-CHECKPOINT    = str(PROJECT_ROOT / "logs" / "lewm_teacher_deep" / "best.pt")
-NPZ_DIR       = str(PROJECT_ROOT / "data" / "human_crafter")
-DATA_OUT      = str(PROJECT_ROOT / "data")
-GOAL_LIBRARY  = str(PROJECT_ROOT / "data" / "goal_library.npz")
-TRAJ_DATASET  = str(PROJECT_ROOT / "data" / "trajectory_dataset.npz")
-LATENTS_CACHE = str(PROJECT_ROOT / "data" / "latents.npz")
-RIDGE_MODEL   = str(PROJECT_ROOT / "data" / "ridge_model.pkl")
-HWM_HIGH_CKPT = str(PROJECT_ROOT / "logs" / "hwm_high" / "best.pt")
+CHECKPOINT    = str(PROJECT_ROOT / "data" / "crafter" / "world_model" / "lewm_teacher_deep" / "best.pt")
+NPZ_DIR       = str(PROJECT_ROOT / "data" / "crafter" / "human")
+DATA_OUT      = str(PROJECT_ROOT / "data" / "crafter" / "wm_cache")
+GOAL_LIBRARY  = str(PROJECT_ROOT / "data" / "crafter" / "wm_cache" / "goal_library.npz")
+TRAJ_DATASET  = str(PROJECT_ROOT / "data" / "crafter" / "wm_cache" / "trajectory_dataset.npz")
+LATENTS_CACHE = str(PROJECT_ROOT / "data" / "crafter" / "wm_cache" / "latents.npz")
+RIDGE_MODEL   = str(PROJECT_ROOT / "data" / "crafter" / "wm_cache" / "ridge_model.pkl")
+HWM_HIGH_CKPT = str(PROJECT_ROOT / "data" / "crafter" / "world_model" / "hwm_high" / "best.pt")
 RESULTS_DIR   = str(PROJECT_ROOT / "results")
 RESULTS_JSON  = str(PROJECT_ROOT / "results" / "results.json")
+
+# Indices (0-based, by sort order of NPZ files) of human episodes held out for eval.
+# Fixed before any training artifact is produced; all training scripts import from here.
+EVAL_EP_INDICES: list[int] = list(range(95, 100))  # episodes 95, 96, 97, 98, 99
 
 # ── LeWM architecture (must match best.pt saved args) ────────────────────────
 LATENT_DIM      = 256

@@ -63,17 +63,33 @@ def train(args):
         dropout=0.1,
     ).to(device)
 
+    # Optional: resume / finetune from an existing checkpoint
+    resume_path = getattr(args, 'resume', None)
+    if resume_path and Path(resume_path).exists():
+        print(f"Resuming from checkpoint: {resume_path}")
+        ckpt_resume = torch.load(resume_path, map_location=device)
+        # Strip DataParallel prefix if present
+        sd = {k.replace('module.', '', 1): v
+              for k, v in ckpt_resume['model'].items()}
+        model.load_state_dict(sd, strict=False)
+
+    # Optional: freeze encoder so only the predictor is trained
+    if getattr(args, 'freeze_encoder', False):
+        for p in model.encoder.parameters():
+            p.requires_grad_(False)
+        print("Encoder frozen — training predictor only")
+
     # Multi-GPU
     if torch.cuda.device_count() > 1:
         print(f"Using {torch.cuda.device_count()} GPUs")
         model = nn.DataParallel(model)
 
     n_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
-    print(f"Model parameters: {n_params/1e6:.1f}M")
+    print(f"Trainable parameters: {n_params/1e6:.1f}M")
 
-    # ── Optimizer ─────────────────────────────────────────────────────────
+    # ── Optimizer (only over trainable params) ─────────────────────────────
     optimizer = torch.optim.AdamW(
-        model.parameters(),
+        filter(lambda p: p.requires_grad, model.parameters()),
         lr=args.lr,
         weight_decay=args.weight_decay,
         betas=(0.9, 0.95),
@@ -149,9 +165,15 @@ def train(args):
 
                 optimizer.zero_grad()
 
+                rollout_steps = getattr(args, 'rollout_steps', 0)
+                rollout_loss_weight = getattr(args, 'rollout_loss_weight', 0.1)
+                fwd_kwargs = dict(
+                    rollout_steps=rollout_steps,
+                    rollout_loss_weight=rollout_loss_weight,
+                )
                 with autocast():
-                    out = model(obs_seq, a_seq) if not isinstance(model, nn.DataParallel) \
-                          else model.module(obs_seq, a_seq)
+                    m = model if not isinstance(model, nn.DataParallel) else model.module
+                    out = m(obs_seq, a_seq, **fwd_kwargs)
                     loss = out['loss']
 
                 scaler.scale(loss).backward()
@@ -168,7 +190,7 @@ def train(args):
 
                 if global_step % args.log_every == 0:
                     lr = optimizer.param_groups[0]['lr']
-                    log({
+                    log_entry = {
                         'epoch': epoch,
                         'step': global_step,
                         'loss': out['loss'].item(),
@@ -176,10 +198,13 @@ def train(args):
                         'sigreg_loss': out['sigreg_loss'],
                         'lr': lr,
                         'time': time.time() - t0,
-                    })
+                    }
+                    if 'rollout_loss' in out:
+                        log_entry['rollout_loss'] = out['rollout_loss']
+                    log(log_entry)
                     t0 = time.time()
 
-            # ── Validation ────────────────────────────────────────────────
+            # ── Validation (teacher-forced loss only — no rollout loss) ───
             model.eval()
             val_losses = []
             with torch.no_grad():
@@ -187,8 +212,8 @@ def train(args):
                     obs_seq = obs_seq.to(device)
                     a_seq = a_seq.to(device)
                     with autocast():
-                        out = model(obs_seq, a_seq) if not isinstance(model, nn.DataParallel) \
-                              else model.module(obs_seq, a_seq)
+                        m = model if not isinstance(model, nn.DataParallel) else model.module
+                        out = m(obs_seq, a_seq, rollout_steps=0)
                     val_losses.append(out['loss'].item())
 
             val_loss = sum(val_losses) / len(val_losses)
@@ -252,14 +277,27 @@ if __name__ == '__main__':
     parser.add_argument('--total_steps', type=int)
     parser.add_argument('--log_every', type=int)
     parser.add_argument('--seed', type=int)
+    # Rollout / finetune
+    parser.add_argument('--rollout_steps', type=int,
+                        help='Open-loop steps for multi-step rollout loss (0 = disabled)')
+    parser.add_argument('--rollout_loss_weight', type=float,
+                        help='Weight applied to the rollout loss term')
+    parser.add_argument('--freeze_encoder', action='store_true', default=None,
+                        help='Freeze encoder weights (predictor-only finetune)')
+    parser.add_argument('--resume', type=str,
+                        help='Path to checkpoint to resume/finetune from')
     # Infra
     parser.add_argument('--logdir', type=str)
+    parser.add_argument('--use_wandb', action='store_true', default=None,
+                        help='Log metrics to Weights & Biases')
+    parser.add_argument('--wandb_project', type=str, default=None)
+    parser.add_argument('--wandb_run_name', type=str, default=None)
 
     cli_args = parser.parse_args()
 
     # Load YAML defaults, then override with any CLI flags that were explicitly set
     defaults = {
-        'data_path': 'crafter_data.pkl',
+        'data_path': 'data/crafter/ppo_rollouts/crafter_data.pkl',
         'n_episodes': 1000,
         'max_steps_per_episode': 10_000,
         'context_len': 16,
@@ -274,10 +312,14 @@ if __name__ == '__main__':
         'total_steps': 200_000,
         'log_every': 50,
         'seed': 0,
-        'logdir': 'logs/lewm_crafter',
+        'logdir': 'data/crafter/world_model/lewm_crafter',
         'use_wandb': False,
         'wandb_project': 'lewm-crafter',
         'wandb_run_name': None,
+        'rollout_steps': 0,
+        'rollout_loss_weight': 0.1,
+        'freeze_encoder': False,
+        'resume': None,
     }
 
     if Path(cli_args.config).exists():
