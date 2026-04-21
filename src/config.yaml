@@ -7,7 +7,7 @@
 # absolute path (e.g. /scratch/...) on clusters that store data elsewhere.
 # ── Data collection (ledata.py) ───────────────────────────────────────────────
 data:
-  save_path: /data/crafter/crafter_data.pkl
+  save_path: data/crafter/ppo_rollouts/crafter_data.pkl
 
   # Number of full Crafter episodes to simulate and save.
   # Each episode runs until the agent dies or max_steps is hit.
@@ -89,4 +89,4 @@ training:
 
 # ── Infrastructure ────────────────────────────────────────────────────────────
 infra:
-  logdir: logs/lewm_crafter
+  logdir: data/crafter/world_model/lewm_crafter

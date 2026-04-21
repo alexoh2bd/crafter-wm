@@ -1,0 +1,138 @@
+{
+  "episodes": [
+    {
+      "condition": "hwm_grad",
+      "achievement": "collect_wood",
+      "seed": 100,
+      "success": false,
+      "steps": 267,
+      "side_achievements": {
+        "wake_up": 52
+      },
+      "planning_ms_per_step": 3336.0265079320648,
+      "wall_time_s": 895.1786365509033,
+      "episode": 0
+    },
+    {
+      "condition": "hwm_grad",
+      "achievement": "collect_drink",
+      "seed": 101,
+      "success": false,
+      "steps": 154,
+      "side_achievements": {
+        "wake_up": 61
+      },
+      "planning_ms_per_step": 3297.6126528357145,
+      "wall_time_s": 510.34820199012756,
+      "episode": 1
+    },
+    {
+      "condition": "hwm_grad",
+      "achievement": "eat_cow",
+      "seed": 102,
+      "success": false,
+      "steps": 188,
+      "side_achievements": {
+        "wake_up": 51,
+        "collect_sapling": 114
+      },
+      "planning_ms_per_step": 3473.0330911177666,
+      "wall_time_s": 655.940523147583,
+      "episode": 2
+    },
+    {
+      "condition": "hwm_grad",
+      "achievement": "place_table",
+      "seed": 103,
+      "success": false,
+      "steps": 240,
+      "side_achievements": {
+        "wake_up": 48
+      },
+      "planning_ms_per_step": 3365.4451681960686,
+      "wall_time_s": 811.1766846179962,
+      "episode": 3
+    },
+    {
+      "condition": "hwm_grad",
+      "achievement": "make_wood_pickaxe",
+      "seed": 104,
+      "success": false,
+      "steps": 294,
+      "side_achievements": {
+        "wake_up": 54
+      },
+      "planning_ms_per_step": 3301.0537755821333,
+      "wall_time_s": 974.468249797821,
+      "episode": 4
+    }
+  ],
+  "aggregates": {
+    "hwm_grad": {
+      "n_episodes": 5,
+      "n_success": 0,
+      "success_rate": 0.0,
+      "mean_steps": 228.6,
+      "mean_steps_success": null,
+      "mean_planning_ms": 3354.63423913275,
+      "per_achievement": {
+        "collect_wood": {
+          "n_episodes": 1,
+          "success_rate": 0.0
+        },
+        "collect_drink": {
+          "n_episodes": 1,
+          "success_rate": 0.0
+        },
+        "eat_cow": {
+          "n_episodes": 1,
+          "success_rate": 0.0
+        },
+        "place_table": {
+          "n_episodes": 1,
+          "success_rate": 0.0
+        },
+        "make_wood_pickaxe": {
+          "n_episodes": 1,
+          "success_rate": 0.0
+        }
+      }
+    }
+  },
+  "config": {
+    "n_episodes": 5,
+    "seed_start": 100,
+    "max_steps": 1000,
+    "checkpoint": "/home/users/aho13/plan/data/crafter/world_model/lewm_teacher_deep/best.pt",
+    "hwm_checkpoint": "/home/users/aho13/plan/data/crafter/world_model/hwm_high/best.pt",
+    "ridge_model": "/home/users/aho13/plan/data/crafter/wm_cache/ridge_model.pkl",
+    "latents_cache": "/home/users/aho13/plan/data/crafter/wm_cache/latents.npz",
+    "goal_library": "/home/users/aho13/plan/data/crafter/wm_cache/goal_library.npz",
+    "traj_dataset": "/home/users/aho13/plan/data/crafter/wm_cache/trajectory_dataset.npz",
+    "results_path": "/home/users/aho13/plan/results/results.json",
+    "condition_arg": "hwm",
+    "achievements_up_to": "collect_iron",
+    "n_workers": 1,
+    "cost": "l1",
+    "probe_path": null,
+    "planner": "grad",
+    "grad_n_steps": 30,
+    "grad_lr": 0.05,
+    "grad_tau_start": 1.0,
+    "grad_tau_end": 0.1,
+    "checkpoint_resolved": "/usr/project/xtmp/aho13/crafter/world_model/lewm_teacher_deep/best.pt",
+    "hwm_checkpoint_resolved": "/usr/project/xtmp/aho13/crafter/world_model/hwm_high/best.pt",
+    "ridge_model_resolved": "/usr/project/xtmp/aho13/crafter/wm_cache/ridge_model.pkl",
+    "latents_cache_resolved": "/usr/project/xtmp/aho13/crafter/wm_cache/latents.npz",
+    "goal_library_resolved": "/usr/project/xtmp/aho13/crafter/wm_cache/goal_library.npz",
+    "traj_dataset_resolved": "/usr/project/xtmp/aho13/crafter/wm_cache/trajectory_dataset.npz",
+    "results_path_resolved": "/home/users/aho13/plan/results/results.json",
+    "conditions_expanded": [
+      "hwm"
+    ],
+    "seed_convention": "Crafter Env(seed) uses seed = seed_start + ep where ep is the 0-based episode index within that condition. Changing n_episodes or goal_library changes which achievement pairs with which seed.",
+    "git_commit": "1b35550abc7021949a118345fdf3af33592a64cf",
+    "slurm_job_id": "11207518",
+    "torch_version": "2.11.0+cu128"
+  }
+}

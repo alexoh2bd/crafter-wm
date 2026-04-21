@@ -1,0 +1,62 @@
+{
+  "episodes": [
+    {
+      "condition": "hwm",
+      "achievement": "collect_wood",
+      "seed": 100,
+      "success": false,
+      "steps": 50,
+      "side_achievements": {},
+      "planning_ms_per_step": 23409.095383565873,
+      "wall_time_s": 1178.1224565505981,
+      "episode": 0
+    }
+  ],
+  "aggregates": {
+    "hwm": {
+      "n_episodes": 1,
+      "n_success": 0,
+      "success_rate": 0.0,
+      "mean_steps": 50.0,
+      "mean_steps_success": null,
+      "mean_planning_ms": 23409.095383565873,
+      "per_achievement": {
+        "collect_wood": {
+          "n_episodes": 1,
+          "success_rate": 0.0
+        }
+      }
+    }
+  },
+  "config": {
+    "n_episodes": 1,
+    "seed_start": 100,
+    "max_steps": 50,
+    "checkpoint": "../data/crafter/world_model/lewm_human_ft/best.pt",
+    "hwm_checkpoint": "../data/crafter/world_model/hwm_high/best.pt",
+    "ridge_model": "../data/crafter/wm_cache/ridge_model.pkl",
+    "latents_cache": "../data/crafter/wm_cache/latents.npz",
+    "goal_library": "../data/crafter/wm_cache/goal_library.npz",
+    "traj_dataset": "../data/crafter/wm_cache/trajectory_dataset.npz",
+    "results_path": "../results/probe_hwm_smoke.json",
+    "condition_arg": "hwm",
+    "achievements_up_to": "collect_iron",
+    "n_workers": 1,
+    "cost": "probe",
+    "probe_path": "../data/crafter/wm_cache/probes.pkl",
+    "checkpoint_resolved": "/usr/project/xtmp/aho13/crafter/world_model/lewm_human_ft/best.pt",
+    "hwm_checkpoint_resolved": "/usr/project/xtmp/aho13/crafter/world_model/hwm_high/best.pt",
+    "ridge_model_resolved": "/usr/project/xtmp/aho13/crafter/wm_cache/ridge_model.pkl",
+    "latents_cache_resolved": "/usr/project/xtmp/aho13/crafter/wm_cache/latents.npz",
+    "goal_library_resolved": "/usr/project/xtmp/aho13/crafter/wm_cache/goal_library.npz",
+    "traj_dataset_resolved": "/usr/project/xtmp/aho13/crafter/wm_cache/trajectory_dataset.npz",
+    "results_path_resolved": "/home/users/aho13/plan/results/probe_hwm_smoke.json",
+    "conditions_expanded": [
+      "hwm"
+    ],
+    "seed_convention": "Crafter Env(seed) uses seed = seed_start + ep where ep is the 0-based episode index within that condition. Changing n_episodes or goal_library changes which achievement pairs with which seed.",
+    "git_commit": "8a7812edc61c350743a4710fa33cd76b925367c7",
+    "slurm_job_id": null,
+    "torch_version": "2.11.0+cu128"
+  }
+}

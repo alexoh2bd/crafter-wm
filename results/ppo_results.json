@@ -1,0 +1,1095 @@
+{
+  "episodes": [
+    {
+      "condition": "ppo",
+      "achievement": "collect_wood",
+      "seed": 100,
+      "success": true,
+      "steps": 27,
+      "planning_ms_per_step": 4.065589047968388,
+      "all_achievements": {
+        "collect_sapling": 1,
+        "collect_wood": 1,
+        "place_plant": 1
+      },
+      "episode": 0
+    },
+    {
+      "condition": "ppo",
+      "achievement": "collect_drink",
+      "seed": 101,
+      "success": true,
+      "steps": 23,
+      "planning_ms_per_step": 3.7566975123532442,
+      "all_achievements": {
+        "collect_drink": 1,
+        "collect_sapling": 2,
+        "place_plant": 2
+      },
+      "episode": 1
+    },
+    {
+      "condition": "ppo",
+      "achievement": "eat_cow",
+      "seed": 102,
+      "success": false,
+      "steps": 39,
+      "planning_ms_per_step": 2.6202649594499516,
+      "all_achievements": {
+        "collect_sapling": 3,
+        "collect_wood": 1,
+        "place_plant": 3
+      },
+      "episode": 2
+    },
+    {
+      "condition": "ppo",
+      "achievement": "place_table",
+      "seed": 103,
+      "success": true,
+      "steps": 19,
+      "planning_ms_per_step": 2.6487736521582854,
+      "all_achievements": {
+        "collect_wood": 2,
+        "place_table": 1
+      },
+      "episode": 3
+    },
+    {
+      "condition": "ppo",
+      "achievement": "make_wood_pickaxe",
+      "seed": 104,
+      "success": false,
+      "steps": 236,
+      "planning_ms_per_step": 2.8234276589069327,
+      "all_achievements": {
+        "collect_sapling": 3,
+        "collect_wood": 3,
+        "place_plant": 3,
+        "place_table": 1,
+        "wake_up": 1
+      },
+      "episode": 4
+    },
+    {
+      "condition": "ppo",
+      "achievement": "make_wood_sword",
+      "seed": 105,
+      "success": false,
+      "steps": 181,
+      "planning_ms_per_step": 4.290247318021007,
+      "all_achievements": {
+        "collect_sapling": 2,
+        "collect_wood": 1,
+        "place_plant": 2
+      },
+      "episode": 5
+    },
+    {
+      "condition": "ppo",
+      "achievement": "collect_stone",
+      "seed": 106,
+      "success": false,
+      "steps": 231,
+      "planning_ms_per_step": 3.514205643834619,
+      "all_achievements": {
+        "collect_sapling": 3,
+        "collect_wood": 4,
+        "defeat_zombie": 1,
+        "place_plant": 3,
+        "place_table": 2,
+        "wake_up": 1
+      },
+      "episode": 6
+    },
+    {
+      "condition": "ppo",
+      "achievement": "defeat_zombie",
+      "seed": 107,
+      "success": false,
+      "steps": 174,
+      "planning_ms_per_step": 3.161822309203703,
+      "all_achievements": {
+        "collect_sapling": 11,
+        "collect_wood": 1,
+        "place_plant": 2,
+        "wake_up": 1
+      },
+      "episode": 7
+    },
+    {
+      "condition": "ppo",
+      "achievement": "defeat_skeleton",
+      "seed": 108,
+      "success": false,
+      "steps": 127,
+      "planning_ms_per_step": 4.240100678995135,
+      "all_achievements": {
+        "collect_sapling": 4,
+        "collect_wood": 7,
+        "eat_cow": 2,
+        "place_plant": 4,
+        "place_table": 3,
+        "wake_up": 1
+      },
+      "episode": 8
+    },
+    {
+      "condition": "ppo",
+      "achievement": "make_stone_pickaxe",
+      "seed": 109,
+      "success": false,
+      "steps": 88,
+      "planning_ms_per_step": 3.851735318841582,
+      "all_achievements": {
+        "collect_sapling": 3,
+        "collect_wood": 4,
+        "eat_cow": 1,
+        "place_plant": 1,
+        "place_table": 2,
+        "wake_up": 1
+      },
+      "episode": 9
+    },
+    {
+      "condition": "ppo",
+      "achievement": "make_stone_sword",
+      "seed": 110,
+      "success": false,
+      "steps": 150,
+      "planning_ms_per_step": 4.468782360975941,
+      "all_achievements": {
+        "collect_sapling": 1,
+        "place_plant": 1,
+        "wake_up": 1
+      },
+      "episode": 10
+    },
+    {
+      "condition": "ppo",
+      "achievement": "collect_coal",
+      "seed": 111,
+      "success": false,
+      "steps": 64,
+      "planning_ms_per_step": 3.9696537060081027,
+      "all_achievements": {
+        "collect_sapling": 2,
+        "collect_wood": 2,
+        "defeat_skeleton": 1,
+        "eat_cow": 1,
+        "place_plant": 2,
+        "place_table": 1,
+        "wake_up": 1
+      },
+      "episode": 11
+    },
+    {
+      "condition": "ppo",
+      "achievement": "collect_iron",
+      "seed": 112,
+      "success": false,
+      "steps": 86,
+      "planning_ms_per_step": 3.127982401354022,
+      "all_achievements": {
+        "collect_sapling": 1,
+        "collect_wood": 3,
+        "place_plant": 1,
+        "place_table": 1,
+        "wake_up": 1
+      },
+      "episode": 12
+    },
+    {
+      "condition": "ppo",
+      "achievement": "collect_wood",
+      "seed": 113,
+      "success": true,
+      "steps": 12,
+      "planning_ms_per_step": 0.7253605484341582,
+      "all_achievements": {
+        "collect_sapling": 1,
+        "collect_wood": 1,
+        "place_plant": 1
+      },
+      "episode": 13
+    },
+    {
+      "condition": "ppo",
+      "achievement": "collect_drink",
+      "seed": 114,
+      "success": false,
+      "steps": 188,
+      "planning_ms_per_step": 3.325755358673632,
+      "all_achievements": {
+        "collect_sapling": 4,
+        "collect_wood": 3,
+        "eat_cow": 1,
+        "place_plant": 3,
+        "place_table": 1,
+        "wake_up": 1
+      },
+      "episode": 14
+    },
+    {
+      "condition": "ppo",
+      "achievement": "eat_cow",
+      "seed": 115,
+      "success": false,
+      "steps": 233,
+      "planning_ms_per_step": 3.4052314908271697,
+      "all_achievements": {
+        "collect_sapling": 9,
+        "collect_wood": 7,
+        "defeat_zombie": 1,
+        "make_wood_pickaxe": 1,
+        "place_plant": 3,
+        "place_table": 2,
+        "wake_up": 1
+      },
+      "episode": 15
+    },
+    {
+      "condition": "ppo",
+      "achievement": "place_table",
+      "seed": 116,
+      "success": false,
+      "steps": 192,
+      "planning_ms_per_step": 5.14772605674807,
+      "all_achievements": {
+        "collect_sapling": 9,
+        "collect_wood": 1,
+        "defeat_zombie": 2,
+        "place_plant": 3,
+        "wake_up": 1
+      },
+      "episode": 16
+    },
+    {
+      "condition": "ppo",
+      "achievement": "make_wood_pickaxe",
+      "seed": 117,
+      "success": false,
+      "steps": 192,
+      "planning_ms_per_step": 9.949000843334943,
+      "all_achievements": {
+        "collect_drink": 86,
+        "collect_sapling": 3,
+        "place_plant": 3,
+        "wake_up": 1
+      },
+      "episode": 17
+    },
+    {
+      "condition": "ppo",
+      "achievement": "make_wood_sword",
+      "seed": 118,
+      "success": false,
+      "steps": 143,
+      "planning_ms_per_step": 3.1214275892328964,
+      "all_achievements": {
+        "collect_drink": 8,
+        "collect_sapling": 3,
+        "eat_cow": 2,
+        "place_plant": 3,
+        "wake_up": 2
+      },
+      "episode": 18
+    },
+    {
+      "condition": "ppo",
+      "achievement": "collect_stone",
+      "seed": 119,
+      "success": false,
+      "steps": 174,
+      "planning_ms_per_step": 3.2316358711827418,
+      "all_achievements": {
+        "collect_drink": 17,
+        "collect_sapling": 3,
+        "collect_wood": 2,
+        "eat_cow": 1,
+        "place_plant": 3,
+        "place_table": 1,
+        "wake_up": 2
+      },
+      "episode": 19
+    },
+    {
+      "condition": "ppo",
+      "achievement": "defeat_zombie",
+      "seed": 120,
+      "success": false,
+      "steps": 164,
+      "planning_ms_per_step": 4.682051406877979,
+      "all_achievements": {
+        "collect_drink": 27,
+        "collect_sapling": 1,
+        "collect_wood": 4,
+        "place_table": 2,
+        "wake_up": 1
+      },
+      "episode": 20
+    },
+    {
+      "condition": "ppo",
+      "achievement": "defeat_skeleton",
+      "seed": 121,
+      "success": false,
+      "steps": 135,
+      "planning_ms_per_step": 6.765495475243639,
+      "all_achievements": {
+        "collect_sapling": 7,
+        "collect_wood": 10,
+        "eat_cow": 2,
+        "place_plant": 3,
+        "place_table": 4,
+        "wake_up": 1
+      },
+      "episode": 21
+    },
+    {
+      "condition": "ppo",
+      "achievement": "make_stone_pickaxe",
+      "seed": 122,
+      "success": false,
+      "steps": 213,
+      "planning_ms_per_step": 5.278589354801766,
+      "all_achievements": {
+        "collect_sapling": 10,
+        "collect_wood": 2,
+        "defeat_zombie": 1,
+        "eat_cow": 1,
+        "place_plant": 8,
+        "place_table": 1,
+        "wake_up": 1
+      },
+      "episode": 22
+    },
+    {
+      "condition": "ppo",
+      "achievement": "make_stone_sword",
+      "seed": 123,
+      "success": false,
+      "steps": 304,
+      "planning_ms_per_step": 2.834902497278036,
+      "all_achievements": {
+        "collect_wood": 2,
+        "place_table": 1,
+        "wake_up": 1
+      },
+      "episode": 23
+    },
+    {
+      "condition": "ppo",
+      "achievement": "collect_coal",
+      "seed": 124,
+      "success": false,
+      "steps": 123,
+      "planning_ms_per_step": 1.9987180140020886,
+      "all_achievements": {
+        "collect_sapling": 3,
+        "place_plant": 3,
+        "wake_up": 1
+      },
+      "episode": 24
+    },
+    {
+      "condition": "ppo",
+      "achievement": "collect_iron",
+      "seed": 125,
+      "success": false,
+      "steps": 185,
+      "planning_ms_per_step": 4.319621861685772,
+      "all_achievements": {
+        "collect_sapling": 8,
+        "place_plant": 1,
+        "wake_up": 1
+      },
+      "episode": 25
+    },
+    {
+      "condition": "ppo",
+      "achievement": "collect_wood",
+      "seed": 126,
+      "success": true,
+      "steps": 13,
+      "planning_ms_per_step": 4.596738789517146,
+      "all_achievements": {
+        "collect_wood": 1
+      },
+      "episode": 26
+    },
+    {
+      "condition": "ppo",
+      "achievement": "collect_drink",
+      "seed": 127,
+      "success": true,
+      "steps": 83,
+      "planning_ms_per_step": 3.2885325848158584,
+      "all_achievements": {
+        "collect_drink": 1,
+        "collect_sapling": 1,
+        "collect_wood": 2,
+        "eat_cow": 1,
+        "place_plant": 1,
+        "place_table": 1,
+        "wake_up": 1
+      },
+      "episode": 27
+    },
+    {
+      "condition": "ppo",
+      "achievement": "eat_cow",
+      "seed": 128,
+      "success": false,
+      "steps": 204,
+      "planning_ms_per_step": 4.29584228378885,
+      "all_achievements": {
+        "collect_sapling": 11,
+        "collect_wood": 1,
+        "defeat_zombie": 2,
+        "place_plant": 3,
+        "wake_up": 1
+      },
+      "episode": 28
+    },
+    {
+      "condition": "ppo",
+      "achievement": "place_table",
+      "seed": 129,
+      "success": true,
+      "steps": 18,
+      "planning_ms_per_step": 0.930012928114997,
+      "all_achievements": {
+        "collect_sapling": 1,
+        "collect_wood": 2,
+        "eat_cow": 1,
+        "place_plant": 1,
+        "place_table": 1
+      },
+      "episode": 29
+    },
+    {
+      "condition": "ppo",
+      "achievement": "make_wood_pickaxe",
+      "seed": 130,
+      "success": false,
+      "steps": 174,
+      "planning_ms_per_step": 3.8671097075887797,
+      "all_achievements": {
+        "collect_sapling": 7,
+        "collect_wood": 4,
+        "defeat_zombie": 1,
+        "eat_cow": 2,
+        "place_plant": 6,
+        "place_table": 2,
+        "wake_up": 1
+      },
+      "episode": 30
+    },
+    {
+      "condition": "ppo",
+      "achievement": "make_wood_sword",
+      "seed": 131,
+      "success": false,
+      "steps": 234,
+      "planning_ms_per_step": 4.760499989900452,
+      "all_achievements": {
+        "collect_sapling": 1,
+        "collect_wood": 2,
+        "place_plant": 1,
+        "place_table": 1,
+        "wake_up": 1
+      },
+      "episode": 31
+    },
+    {
+      "condition": "ppo",
+      "achievement": "collect_stone",
+      "seed": 132,
+      "success": false,
+      "steps": 230,
+      "planning_ms_per_step": 9.850293709694043,
+      "all_achievements": {
+        "collect_sapling": 1,
+        "collect_wood": 1,
+        "place_plant": 1,
+        "wake_up": 1
+      },
+      "episode": 32
+    },
+    {
+      "condition": "ppo",
+      "achievement": "defeat_zombie",
+      "seed": 133,
+      "success": false,
+      "steps": 181,
+      "planning_ms_per_step": 5.1374509570430655,
+      "all_achievements": {
+        "collect_sapling": 1,
+        "collect_wood": 4,
+        "eat_cow": 1,
+        "place_plant": 1,
+        "place_table": 1
+      },
+      "episode": 33
+    },
+    {
+      "condition": "ppo",
+      "achievement": "defeat_skeleton",
+      "seed": 134,
+      "success": false,
+      "steps": 107,
+      "planning_ms_per_step": 3.5677581033277734,
+      "all_achievements": {
+        "collect_sapling": 1,
+        "place_plant": 1,
+        "wake_up": 1
+      },
+      "episode": 34
+    },
+    {
+      "condition": "ppo",
+      "achievement": "make_stone_pickaxe",
+      "seed": 135,
+      "success": false,
+      "steps": 121,
+      "planning_ms_per_step": 3.006370384092173,
+      "all_achievements": {
+        "collect_sapling": 1,
+        "collect_wood": 3,
+        "eat_cow": 2,
+        "place_plant": 1,
+        "place_table": 1,
+        "wake_up": 1
+      },
+      "episode": 35
+    },
+    {
+      "condition": "ppo",
+      "achievement": "make_stone_sword",
+      "seed": 136,
+      "success": false,
+      "steps": 118,
+      "planning_ms_per_step": 4.317254348957943,
+      "all_achievements": {
+        "collect_sapling": 1,
+        "collect_wood": 5,
+        "eat_cow": 1,
+        "place_plant": 1,
+        "place_table": 2
+      },
+      "episode": 36
+    },
+    {
+      "condition": "ppo",
+      "achievement": "collect_coal",
+      "seed": 137,
+      "success": false,
+      "steps": 158,
+      "planning_ms_per_step": 3.1989568791387577,
+      "all_achievements": {
+        "collect_sapling": 11,
+        "collect_wood": 3,
+        "eat_cow": 1,
+        "place_plant": 3,
+        "place_table": 1,
+        "wake_up": 1
+      },
+      "episode": 37
+    },
+    {
+      "condition": "ppo",
+      "achievement": "collect_iron",
+      "seed": 138,
+      "success": false,
+      "steps": 112,
+      "planning_ms_per_step": 3.254277544328943,
+      "all_achievements": {
+        "collect_sapling": 8,
+        "collect_wood": 1,
+        "place_plant": 2,
+        "wake_up": 1
+      },
+      "episode": 38
+    },
+    {
+      "condition": "ppo",
+      "achievement": "collect_wood",
+      "seed": 139,
+      "success": true,
+      "steps": 17,
+      "planning_ms_per_step": 2.892515019458883,
+      "all_achievements": {
+        "collect_wood": 1,
+        "eat_cow": 1
+      },
+      "episode": 39
+    },
+    {
+      "condition": "ppo",
+      "achievement": "collect_drink",
+      "seed": 140,
+      "success": false,
+      "steps": 203,
+      "planning_ms_per_step": 2.6637378488231467,
+      "all_achievements": {
+        "collect_sapling": 8,
+        "defeat_zombie": 3,
+        "eat_cow": 1,
+        "place_plant": 3,
+        "wake_up": 1
+      },
+      "episode": 40
+    },
+    {
+      "condition": "ppo",
+      "achievement": "eat_cow",
+      "seed": 141,
+      "success": true,
+      "steps": 53,
+      "planning_ms_per_step": 3.282432497110007,
+      "all_achievements": {
+        "collect_sapling": 1,
+        "collect_wood": 1,
+        "defeat_zombie": 1,
+        "eat_cow": 1,
+        "place_plant": 1,
+        "wake_up": 1
+      },
+      "episode": 41
+    },
+    {
+      "condition": "ppo",
+      "achievement": "place_table",
+      "seed": 142,
+      "success": true,
+      "steps": 16,
+      "planning_ms_per_step": 1.4032237231731415,
+      "all_achievements": {
+        "collect_wood": 3,
+        "place_table": 1
+      },
+      "episode": 42
+    },
+    {
+      "condition": "ppo",
+      "achievement": "make_wood_pickaxe",
+      "seed": 143,
+      "success": false,
+      "steps": 36,
+      "planning_ms_per_step": 0.7163928174931142,
+      "all_achievements": {
+        "collect_sapling": 2,
+        "collect_wood": 1,
+        "place_plant": 2
+      },
+      "episode": 43
+    },
+    {
+      "condition": "ppo",
+      "achievement": "make_wood_sword",
+      "seed": 144,
+      "success": false,
+      "steps": 167,
+      "planning_ms_per_step": 3.602183828253054,
+      "all_achievements": {
+        "collect_drink": 3,
+        "collect_sapling": 5,
+        "collect_wood": 3,
+        "eat_cow": 2,
+        "place_plant": 3,
+        "place_table": 1
+      },
+      "episode": 44
+    },
+    {
+      "condition": "ppo",
+      "achievement": "collect_stone",
+      "seed": 145,
+      "success": false,
+      "steps": 200,
+      "planning_ms_per_step": 5.861622977536172,
+      "all_achievements": {
+        "collect_sapling": 3,
+        "collect_wood": 5,
+        "defeat_zombie": 1,
+        "place_plant": 2,
+        "place_table": 2,
+        "wake_up": 1
+      },
+      "episode": 45
+    },
+    {
+      "condition": "ppo",
+      "achievement": "defeat_zombie",
+      "seed": 146,
+      "success": false,
+      "steps": 78,
+      "planning_ms_per_step": 3.455559836509518,
+      "all_achievements": {
+        "collect_sapling": 3,
+        "place_plant": 3,
+        "wake_up": 1
+      },
+      "episode": 46
+    },
+    {
+      "condition": "ppo",
+      "achievement": "defeat_skeleton",
+      "seed": 147,
+      "success": false,
+      "steps": 66,
+      "planning_ms_per_step": 2.6762599167837338,
+      "all_achievements": {
+        "collect_sapling": 3,
+        "collect_wood": 3,
+        "place_plant": 1,
+        "place_table": 1,
+        "wake_up": 1
+      },
+      "episode": 47
+    },
+    {
+      "condition": "ppo",
+      "achievement": "make_stone_pickaxe",
+      "seed": 148,
+      "success": false,
+      "steps": 171,
+      "planning_ms_per_step": 4.437339238887816,
+      "all_achievements": {
+        "collect_sapling": 5,
+        "collect_wood": 4,
+        "defeat_zombie": 1,
+        "eat_cow": 1,
+        "place_plant": 5,
+        "place_table": 2,
+        "wake_up": 1
+      },
+      "episode": 48
+    },
+    {
+      "condition": "ppo",
+      "achievement": "make_stone_sword",
+      "seed": 149,
+      "success": false,
+      "steps": 185,
+      "planning_ms_per_step": 4.1512339350742264,
+      "all_achievements": {
+        "collect_drink": 23,
+        "collect_sapling": 2,
+        "collect_wood": 1,
+        "place_plant": 1,
+        "wake_up": 1
+      },
+      "episode": 49
+    },
+    {
+      "condition": "ppo",
+      "achievement": "collect_coal",
+      "seed": 150,
+      "success": false,
+      "steps": 180,
+      "planning_ms_per_step": 4.306419636122882,
+      "all_achievements": {
+        "collect_sapling": 6,
+        "collect_wood": 1,
+        "defeat_zombie": 1,
+        "place_plant": 3,
+        "wake_up": 1
+      },
+      "episode": 50
+    },
+    {
+      "condition": "ppo",
+      "achievement": "collect_iron",
+      "seed": 151,
+      "success": false,
+      "steps": 166,
+      "planning_ms_per_step": 5.145105151796197,
+      "all_achievements": {
+        "collect_sapling": 3,
+        "collect_wood": 7,
+        "eat_cow": 1,
+        "make_wood_pickaxe": 3,
+        "place_plant": 3,
+        "place_table": 1,
+        "wake_up": 1
+      },
+      "episode": 51
+    },
+    {
+      "condition": "ppo",
+      "achievement": "collect_wood",
+      "seed": 152,
+      "success": false,
+      "steps": 236,
+      "planning_ms_per_step": 5.8496125176612095,
+      "all_achievements": {
+        "collect_sapling": 2,
+        "eat_cow": 1,
+        "place_plant": 2,
+        "wake_up": 1
+      },
+      "episode": 52
+    },
+    {
+      "condition": "ppo",
+      "achievement": "collect_drink",
+      "seed": 153,
+      "success": false,
+      "steps": 225,
+      "planning_ms_per_step": 4.337024694929521,
+      "all_achievements": {
+        "collect_sapling": 11,
+        "collect_wood": 1,
+        "defeat_zombie": 2,
+        "place_plant": 2,
+        "wake_up": 1
+      },
+      "episode": 53
+    },
+    {
+      "condition": "ppo",
+      "achievement": "eat_cow",
+      "seed": 154,
+      "success": true,
+      "steps": 81,
+      "planning_ms_per_step": 5.020770313287223,
+      "all_achievements": {
+        "collect_drink": 1,
+        "collect_wood": 2,
+        "eat_cow": 1,
+        "place_table": 1,
+        "wake_up": 1
+      },
+      "episode": 54
+    },
+    {
+      "condition": "ppo",
+      "achievement": "place_table",
+      "seed": 155,
+      "success": false,
+      "steps": 262,
+      "planning_ms_per_step": 4.251024005081476,
+      "all_achievements": {
+        "collect_drink": 1,
+        "collect_sapling": 14,
+        "collect_wood": 1,
+        "defeat_zombie": 4,
+        "place_plant": 8,
+        "wake_up": 1
+      },
+      "episode": 55
+    },
+    {
+      "condition": "ppo",
+      "achievement": "make_wood_pickaxe",
+      "seed": 156,
+      "success": false,
+      "steps": 236,
+      "planning_ms_per_step": 5.771330897143836,
+      "all_achievements": {
+        "collect_sapling": 25,
+        "place_plant": 2,
+        "wake_up": 1
+      },
+      "episode": 56
+    },
+    {
+      "condition": "ppo",
+      "achievement": "make_wood_sword",
+      "seed": 157,
+      "success": false,
+      "steps": 233,
+      "planning_ms_per_step": 3.1263918052287574,
+      "all_achievements": {
+        "collect_sapling": 4,
+        "defeat_zombie": 2,
+        "eat_cow": 1,
+        "place_plant": 2
+      },
+      "episode": 57
+    },
+    {
+      "condition": "ppo",
+      "achievement": "collect_stone",
+      "seed": 158,
+      "success": false,
+      "steps": 166,
+      "planning_ms_per_step": 3.607424357569361,
+      "all_achievements": {
+        "collect_drink": 88,
+        "collect_sapling": 1,
+        "eat_cow": 1,
+        "place_plant": 1,
+        "wake_up": 2
+      },
+      "episode": 58
+    },
+    {
+      "condition": "ppo",
+      "achievement": "defeat_zombie",
+      "seed": 159,
+      "success": false,
+      "steps": 33,
+      "planning_ms_per_step": 5.057415035976605,
+      "all_achievements": {
+        "collect_drink": 15,
+        "collect_sapling": 1,
+        "collect_wood": 1,
+        "eat_cow": 1,
+        "place_plant": 1
+      },
+      "episode": 59
+    },
+    {
+      "condition": "ppo",
+      "achievement": "defeat_skeleton",
+      "seed": 160,
+      "success": false,
+      "steps": 81,
+      "planning_ms_per_step": 3.2640991180583283,
+      "all_achievements": {
+        "collect_sapling": 1,
+        "collect_wood": 2,
+        "place_plant": 1,
+        "place_table": 1,
+        "wake_up": 1
+      },
+      "episode": 60
+    },
+    {
+      "condition": "ppo",
+      "achievement": "make_stone_pickaxe",
+      "seed": 161,
+      "success": false,
+      "steps": 66,
+      "planning_ms_per_step": 5.914677604750702,
+      "all_achievements": {
+        "collect_sapling": 1,
+        "place_plant": 1,
+        "wake_up": 1
+      },
+      "episode": 61
+    },
+    {
+      "condition": "ppo",
+      "achievement": "make_stone_sword",
+      "seed": 162,
+      "success": false,
+      "steps": 177,
+      "planning_ms_per_step": 3.5735100933934674,
+      "all_achievements": {
+        "collect_drink": 3,
+        "collect_sapling": 10,
+        "collect_wood": 3,
+        "defeat_zombie": 1,
+        "eat_cow": 3,
+        "place_plant": 3,
+        "place_table": 1,
+        "wake_up": 1
+      },
+      "episode": 62
+    },
+    {
+      "condition": "ppo",
+      "achievement": "collect_coal",
+      "seed": 163,
+      "success": false,
+      "steps": 151,
+      "planning_ms_per_step": 4.158795663211125,
+      "all_achievements": {
+        "collect_sapling": 3,
+        "place_plant": 3,
+        "wake_up": 1
+      },
+      "episode": 63
+    },
+    {
+      "condition": "ppo",
+      "achievement": "collect_iron",
+      "seed": 164,
+      "success": false,
+      "steps": 179,
+      "planning_ms_per_step": 3.4676339040255413,
+      "all_achievements": {
+        "collect_sapling": 3,
+        "collect_wood": 4,
+        "place_plant": 2,
+        "place_table": 1,
+        "wake_up": 1
+      },
+      "episode": 64
+    }
+  ],
+  "aggregates": {
+    "ppo": {
+      "n_episodes": 65,
+      "n_success": 11,
+      "success_rate": 0.16923076923076924,
+      "mean_steps": 140.30769230769232,
+      "per_achievement": {
+        "collect_wood": {
+          "n_episodes": 5,
+          "success_rate": 0.8
+        },
+        "collect_drink": {
+          "n_episodes": 5,
+          "success_rate": 0.4
+        },
+        "eat_cow": {
+          "n_episodes": 5,
+          "success_rate": 0.4
+        },
+        "place_table": {
+          "n_episodes": 5,
+          "success_rate": 0.6
+        },
+        "make_wood_pickaxe": {
+          "n_episodes": 5,
+          "success_rate": 0.0
+        },
+        "make_wood_sword": {
+          "n_episodes": 5,
+          "success_rate": 0.0
+        },
+        "collect_stone": {
+          "n_episodes": 5,
+          "success_rate": 0.0
+        },
+        "defeat_zombie": {
+          "n_episodes": 5,
+          "success_rate": 0.0
+        },
+        "defeat_skeleton": {
+          "n_episodes": 5,
+          "success_rate": 0.0
+        },
+        "make_stone_pickaxe": {
+          "n_episodes": 5,
+          "success_rate": 0.0
+        },
+        "make_stone_sword": {
+          "n_episodes": 5,
+          "success_rate": 0.0
+        },
+        "collect_coal": {
+          "n_episodes": 5,
+          "success_rate": 0.0
+        },
+        "collect_iron": {
+          "n_episodes": 5,
+          "success_rate": 0.0
+        }
+      }
+    }
+  },
+  "config": {
+    "condition": "ppo",
+    "checkpoint": "/home/users/aho13/plan/data/crafter/ppo/ppo_teacher.pt",
+    "n_episodes": 65,
+    "seed_start": 100,
+    "max_steps": 1000,
+    "deterministic": true
+  }
+}

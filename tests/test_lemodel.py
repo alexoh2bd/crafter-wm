@@ -73,12 +73,14 @@ class TestLeWMForward:
         out = tiny_model(obs_seq, a_seq)
         assert out["loss"].shape == ()
 
-    def test_pred_loss_sigreg_loss_are_floats(self, tiny_model):
-        """pred_loss and sigreg_loss are detached floats (for logging)."""
+    def test_pred_loss_sigreg_loss_are_scalar_tensors(self, tiny_model):
+        """pred_loss / sigreg_loss are detached scalars (float() for logging; compile-friendly)."""
         obs_seq, a_seq = make_batch()
         out = tiny_model(obs_seq, a_seq)
-        assert isinstance(out["pred_loss"], float)
-        assert isinstance(out["sigreg_loss"], float)
+        assert out["pred_loss"].shape == ()
+        assert out["sigreg_loss"].shape == ()
+        assert not out["pred_loss"].requires_grad
+        assert not out["sigreg_loss"].requires_grad
 
     def test_z_seq_shape(self, tiny_model, tiny_lewm_kwargs):
         obs_seq, a_seq = make_batch()
@@ -154,3 +156,34 @@ class TestLeWMRollout:
         a_seq = torch.zeros(B, 2, ACTION_DIM)
         z_pred = tiny_model.rollout(z0, a_seq)
         assert torch.allclose(z_pred[:, 0], z0)
+
+
+# ── LeWM wide predictor (predictor_hidden_dim > latent_dim) ─────────────────
+
+class TestLeWMWidePredictor:
+    def test_forward_and_rollout(self):
+        """384-wide trunk with 256-D latents (LeWM v2 style)."""
+        m = LeWM(
+            img_size=64,
+            patch_size=8,
+            latent_dim=32,
+            action_dim=ACTION_DIM,
+            encoder_depth=1,
+            encoder_heads=1,
+            predictor_depth=1,
+            predictor_heads=2,
+            context_len=4,
+            sigreg_M=16,
+            sigreg_lambda=0.1,
+            dropout=0.0,
+            predictor_hidden_dim=48,
+        ).cpu()
+        obs_seq, a_seq = make_batch()
+        out = m(obs_seq, a_seq)
+        assert out["z_hat"].shape == (B, T, 32)
+        m.eval()
+        z0 = torch.randn(B, 32)
+        a_seq_r = torch.zeros(B, 3, ACTION_DIM)
+        a_seq_r.scatter_(2, torch.randint(0, ACTION_DIM, (B, 3, 1)), 1.0)
+        z_pred = m.rollout(z0, a_seq_r)
+        assert z_pred.shape == (B, 4, 32)

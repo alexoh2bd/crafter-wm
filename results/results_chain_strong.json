@@ -1,0 +1,1698 @@
+{
+  "episodes": [
+    {
+      "condition": "hwm",
+      "achievement": "collect_wood",
+      "seed": 100,
+      "success": false,
+      "steps": 207,
+      "side_achievements": {},
+      "planning_ms_per_step": 219.62168101887195,
+      "wall_time_s": 48.581584215164185,
+      "episode": 0
+    },
+    {
+      "condition": "hwm",
+      "achievement": "collect_drink",
+      "seed": 101,
+      "success": true,
+      "steps": 62,
+      "side_achievements": {},
+      "planning_ms_per_step": 217.69935126987195,
+      "wall_time_s": 14.821756839752197,
+      "episode": 1
+    },
+    {
+      "condition": "hwm",
+      "achievement": "eat_cow",
+      "seed": 102,
+      "success": false,
+      "steps": 148,
+      "side_achievements": {
+        "wake_up": 59,
+        "collect_sapling": 84,
+        "place_plant": 85
+      },
+      "planning_ms_per_step": 216.7131477287291,
+      "wall_time_s": 34.06685662269592,
+      "episode": 2
+    },
+    {
+      "condition": "hwm",
+      "achievement": "place_table",
+      "seed": 103,
+      "success": false,
+      "steps": 133,
+      "side_achievements": {},
+      "planning_ms_per_step": 217.00678085138026,
+      "wall_time_s": 30.72244644165039,
+      "episode": 3
+    },
+    {
+      "condition": "hwm",
+      "achievement": "make_wood_pickaxe",
+      "seed": 104,
+      "success": false,
+      "steps": 294,
+      "side_achievements": {},
+      "planning_ms_per_step": 217.1464866267986,
+      "wall_time_s": 66.97446322441101,
+      "episode": 4
+    },
+    {
+      "condition": "hwm",
+      "achievement": "make_wood_sword",
+      "seed": 105,
+      "success": false,
+      "steps": 172,
+      "side_achievements": {
+        "wake_up": 50,
+        "collect_sapling": 118
+      },
+      "planning_ms_per_step": 218.94087994384557,
+      "wall_time_s": 39.8297324180603,
+      "episode": 5
+    },
+    {
+      "condition": "hwm",
+      "achievement": "collect_stone",
+      "seed": 106,
+      "success": false,
+      "steps": 189,
+      "side_achievements": {},
+      "planning_ms_per_step": 218.71627460199375,
+      "wall_time_s": 43.64320254325867,
+      "episode": 6
+    },
+    {
+      "condition": "hwm",
+      "achievement": "defeat_zombie",
+      "seed": 107,
+      "success": false,
+      "steps": 180,
+      "side_achievements": {
+        "wake_up": 127
+      },
+      "planning_ms_per_step": 218.6214849766758,
+      "wall_time_s": 41.58023953437805,
+      "episode": 7
+    },
+    {
+      "condition": "hwm",
+      "achievement": "defeat_skeleton",
+      "seed": 108,
+      "success": false,
+      "steps": 188,
+      "side_achievements": {},
+      "planning_ms_per_step": 219.3522913619242,
+      "wall_time_s": 43.553471088409424,
+      "episode": 8
+    },
+    {
+      "condition": "hwm",
+      "achievement": "make_stone_pickaxe",
+      "seed": 109,
+      "success": false,
+      "steps": 192,
+      "side_achievements": {},
+      "planning_ms_per_step": 219.45469900189588,
+      "wall_time_s": 44.43156385421753,
+      "episode": 9
+    },
+    {
+      "condition": "hwm",
+      "achievement": "make_stone_sword",
+      "seed": 110,
+      "success": false,
+      "steps": 165,
+      "side_achievements": {},
+      "planning_ms_per_step": 218.91493884225687,
+      "wall_time_s": 38.21017599105835,
+      "episode": 10
+    },
+    {
+      "condition": "hwm",
+      "achievement": "collect_coal",
+      "seed": 111,
+      "success": false,
+      "steps": 34,
+      "side_achievements": {},
+      "planning_ms_per_step": 219.27767882452292,
+      "wall_time_s": 8.569495439529419,
+      "episode": 11
+    },
+    {
+      "condition": "hwm",
+      "achievement": "collect_iron",
+      "seed": 112,
+      "success": false,
+      "steps": 57,
+      "side_achievements": {},
+      "planning_ms_per_step": 218.9439717157368,
+      "wall_time_s": 13.806667566299438,
+      "episode": 12
+    },
+    {
+      "condition": "hwm",
+      "achievement": "collect_wood",
+      "seed": 113,
+      "success": false,
+      "steps": 236,
+      "side_achievements": {},
+      "planning_ms_per_step": 218.82298577703156,
+      "wall_time_s": 54.233646631240845,
+      "episode": 13
+    },
+    {
+      "condition": "hwm",
+      "achievement": "collect_drink",
+      "seed": 114,
+      "success": false,
+      "steps": 70,
+      "side_achievements": {},
+      "planning_ms_per_step": 218.49878845470292,
+      "wall_time_s": 16.666621208190918,
+      "episode": 14
+    },
+    {
+      "condition": "hwm",
+      "achievement": "eat_cow",
+      "seed": 115,
+      "success": false,
+      "steps": 164,
+      "side_achievements": {
+        "wake_up": 72,
+        "collect_wood": 163
+      },
+      "planning_ms_per_step": 218.8330995623113,
+      "wall_time_s": 38.011627435684204,
+      "episode": 15
+    },
+    {
+      "condition": "hwm",
+      "achievement": "place_table",
+      "seed": 116,
+      "success": false,
+      "steps": 159,
+      "side_achievements": {},
+      "planning_ms_per_step": 218.69347889983803,
+      "wall_time_s": 36.86756205558777,
+      "episode": 16
+    },
+    {
+      "condition": "hwm",
+      "achievement": "make_wood_pickaxe",
+      "seed": 117,
+      "success": false,
+      "steps": 83,
+      "side_achievements": {},
+      "planning_ms_per_step": 218.7927886394851,
+      "wall_time_s": 19.65058708190918,
+      "episode": 17
+    },
+    {
+      "condition": "hwm",
+      "achievement": "make_wood_sword",
+      "seed": 118,
+      "success": false,
+      "steps": 117,
+      "side_achievements": {},
+      "planning_ms_per_step": 218.90729770828517,
+      "wall_time_s": 27.417733907699585,
+      "episode": 18
+    },
+    {
+      "condition": "hwm",
+      "achievement": "collect_stone",
+      "seed": 119,
+      "success": false,
+      "steps": 173,
+      "side_achievements": {},
+      "planning_ms_per_step": 218.69839773098857,
+      "wall_time_s": 40.008829832077026,
+      "episode": 19
+    },
+    {
+      "condition": "hwm",
+      "achievement": "defeat_zombie",
+      "seed": 120,
+      "success": false,
+      "steps": 161,
+      "side_achievements": {},
+      "planning_ms_per_step": 218.90997687667053,
+      "wall_time_s": 37.31817555427551,
+      "episode": 20
+    },
+    {
+      "condition": "hwm",
+      "achievement": "defeat_skeleton",
+      "seed": 121,
+      "success": false,
+      "steps": 146,
+      "side_achievements": {},
+      "planning_ms_per_step": 218.74643650467266,
+      "wall_time_s": 33.89477491378784,
+      "episode": 21
+    },
+    {
+      "condition": "hwm",
+      "achievement": "make_stone_pickaxe",
+      "seed": 122,
+      "success": false,
+      "steps": 227,
+      "side_achievements": {},
+      "planning_ms_per_step": 218.84804393784327,
+      "wall_time_s": 52.248921155929565,
+      "episode": 22
+    },
+    {
+      "condition": "hwm",
+      "achievement": "make_stone_sword",
+      "seed": 123,
+      "success": false,
+      "steps": 114,
+      "side_achievements": {},
+      "planning_ms_per_step": 218.87470139680724,
+      "wall_time_s": 26.721961736679077,
+      "episode": 23
+    },
+    {
+      "condition": "hwm",
+      "achievement": "collect_coal",
+      "seed": 124,
+      "success": false,
+      "steps": 156,
+      "side_achievements": {},
+      "planning_ms_per_step": 218.87139507975334,
+      "wall_time_s": 36.234567165374756,
+      "episode": 24
+    },
+    {
+      "condition": "hwm",
+      "achievement": "collect_iron",
+      "seed": 125,
+      "success": false,
+      "steps": 249,
+      "side_achievements": {},
+      "planning_ms_per_step": 218.91278152664503,
+      "wall_time_s": 57.27239727973938,
+      "episode": 25
+    },
+    {
+      "condition": "hwm",
+      "achievement": "collect_wood",
+      "seed": 126,
+      "success": false,
+      "steps": 241,
+      "side_achievements": {},
+      "planning_ms_per_step": 218.84476071169516,
+      "wall_time_s": 55.411776304244995,
+      "episode": 26
+    },
+    {
+      "condition": "hwm",
+      "achievement": "collect_drink",
+      "seed": 127,
+      "success": false,
+      "steps": 89,
+      "side_achievements": {
+        "collect_sapling": 16,
+        "place_plant": 23
+      },
+      "planning_ms_per_step": 218.62421165942476,
+      "wall_time_s": 20.920185804367065,
+      "episode": 27
+    },
+    {
+      "condition": "hwm",
+      "achievement": "eat_cow",
+      "seed": 128,
+      "success": false,
+      "steps": 204,
+      "side_achievements": {
+        "collect_sapling": 9,
+        "place_plant": 10,
+        "wake_up": 45
+      },
+      "planning_ms_per_step": 218.86856685958656,
+      "wall_time_s": 47.154688119888306,
+      "episode": 28
+    },
+    {
+      "condition": "hwm",
+      "achievement": "place_table",
+      "seed": 129,
+      "success": false,
+      "steps": 157,
+      "side_achievements": {},
+      "planning_ms_per_step": 218.73728075557074,
+      "wall_time_s": 36.38293671607971,
+      "episode": 29
+    },
+    {
+      "condition": "hwm",
+      "achievement": "make_wood_pickaxe",
+      "seed": 130,
+      "success": false,
+      "steps": 156,
+      "side_achievements": {},
+      "planning_ms_per_step": 218.6850643095871,
+      "wall_time_s": 36.15375733375549,
+      "episode": 30
+    },
+    {
+      "condition": "hwm",
+      "achievement": "make_wood_sword",
+      "seed": 131,
+      "success": false,
+      "steps": 146,
+      "side_achievements": {
+        "wake_up": 68,
+        "collect_sapling": 96
+      },
+      "planning_ms_per_step": 218.76736332292427,
+      "wall_time_s": 33.951770067214966,
+      "episode": 31
+    },
+    {
+      "condition": "hwm",
+      "achievement": "collect_stone",
+      "seed": 132,
+      "success": false,
+      "steps": 162,
+      "side_achievements": {},
+      "planning_ms_per_step": 219.01288613631033,
+      "wall_time_s": 37.581523418426514,
+      "episode": 32
+    },
+    {
+      "condition": "hwm",
+      "achievement": "defeat_zombie",
+      "seed": 133,
+      "success": false,
+      "steps": 102,
+      "side_achievements": {},
+      "planning_ms_per_step": 219.03054156870235,
+      "wall_time_s": 23.966757774353027,
+      "episode": 33
+    },
+    {
+      "condition": "hwm",
+      "achievement": "defeat_skeleton",
+      "seed": 134,
+      "success": false,
+      "steps": 93,
+      "side_achievements": {},
+      "planning_ms_per_step": 218.98338124556568,
+      "wall_time_s": 21.973779916763306,
+      "episode": 34
+    },
+    {
+      "condition": "hwm",
+      "achievement": "make_stone_pickaxe",
+      "seed": 135,
+      "success": false,
+      "steps": 159,
+      "side_achievements": {},
+      "planning_ms_per_step": 217.87956741246037,
+      "wall_time_s": 36.76147699356079,
+      "episode": 35
+    },
+    {
+      "condition": "hwm",
+      "achievement": "make_stone_sword",
+      "seed": 136,
+      "success": false,
+      "steps": 29,
+      "side_achievements": {},
+      "planning_ms_per_step": 217.7426713550913,
+      "wall_time_s": 7.408276796340942,
+      "episode": 36
+    },
+    {
+      "condition": "hwm",
+      "achievement": "collect_coal",
+      "seed": 137,
+      "success": false,
+      "steps": 165,
+      "side_achievements": {},
+      "planning_ms_per_step": 217.9040938051361,
+      "wall_time_s": 38.03941893577576,
+      "episode": 37
+    },
+    {
+      "condition": "hwm",
+      "achievement": "collect_iron",
+      "seed": 138,
+      "success": false,
+      "steps": 164,
+      "side_achievements": {},
+      "planning_ms_per_step": 217.76610785504667,
+      "wall_time_s": 37.8090603351593,
+      "episode": 38
+    },
+    {
+      "condition": "hwm",
+      "achievement": "collect_wood",
+      "seed": 139,
+      "success": false,
+      "steps": 203,
+      "side_achievements": {},
+      "planning_ms_per_step": 219.15618085251947,
+      "wall_time_s": 46.91150975227356,
+      "episode": 39
+    },
+    {
+      "condition": "hwm",
+      "achievement": "collect_drink",
+      "seed": 140,
+      "success": false,
+      "steps": 151,
+      "side_achievements": {
+        "wake_up": 56
+      },
+      "planning_ms_per_step": 219.63049990698596,
+      "wall_time_s": 35.182748556137085,
+      "episode": 40
+    },
+    {
+      "condition": "hwm",
+      "achievement": "eat_cow",
+      "seed": 141,
+      "success": false,
+      "steps": 154,
+      "side_achievements": {
+        "collect_wood": 35,
+        "collect_sapling": 49,
+        "place_plant": 53
+      },
+      "planning_ms_per_step": 219.6710290532414,
+      "wall_time_s": 35.89283585548401,
+      "episode": 41
+    },
+    {
+      "condition": "hwm",
+      "achievement": "place_table",
+      "seed": 142,
+      "success": false,
+      "steps": 196,
+      "side_achievements": {},
+      "planning_ms_per_step": 218.77926684992045,
+      "wall_time_s": 45.25711798667908,
+      "episode": 42
+    },
+    {
+      "condition": "hwm",
+      "achievement": "make_wood_pickaxe",
+      "seed": 143,
+      "success": false,
+      "steps": 171,
+      "side_achievements": {},
+      "planning_ms_per_step": 219.03875283896923,
+      "wall_time_s": 39.64045524597168,
+      "episode": 43
+    },
+    {
+      "condition": "hwm",
+      "achievement": "make_wood_sword",
+      "seed": 144,
+      "success": false,
+      "steps": 151,
+      "side_achievements": {
+        "collect_sapling": 49,
+        "place_plant": 140
+      },
+      "planning_ms_per_step": 219.09076497205442,
+      "wall_time_s": 35.14690041542053,
+      "episode": 44
+    },
+    {
+      "condition": "hwm",
+      "achievement": "collect_stone",
+      "seed": 145,
+      "success": false,
+      "steps": 153,
+      "side_achievements": {},
+      "planning_ms_per_step": 218.8075835652211,
+      "wall_time_s": 35.46693706512451,
+      "episode": 45
+    },
+    {
+      "condition": "hwm",
+      "achievement": "defeat_zombie",
+      "seed": 146,
+      "success": false,
+      "steps": 39,
+      "side_achievements": {},
+      "planning_ms_per_step": 218.12981271590942,
+      "wall_time_s": 9.646734237670898,
+      "episode": 46
+    },
+    {
+      "condition": "hwm",
+      "achievement": "defeat_skeleton",
+      "seed": 147,
+      "success": false,
+      "steps": 94,
+      "side_achievements": {},
+      "planning_ms_per_step": 218.86144855872115,
+      "wall_time_s": 22.152318239212036,
+      "episode": 47
+    },
+    {
+      "condition": "hwm",
+      "achievement": "make_stone_pickaxe",
+      "seed": 148,
+      "success": false,
+      "steps": 136,
+      "side_achievements": {},
+      "planning_ms_per_step": 218.72491064919706,
+      "wall_time_s": 31.642213106155396,
+      "episode": 48
+    },
+    {
+      "condition": "hwm",
+      "achievement": "make_stone_sword",
+      "seed": 149,
+      "success": false,
+      "steps": 183,
+      "side_achievements": {},
+      "planning_ms_per_step": 218.99997641439322,
+      "wall_time_s": 42.34022283554077,
+      "episode": 49
+    },
+    {
+      "condition": "hwm",
+      "achievement": "collect_coal",
+      "seed": 150,
+      "success": false,
+      "steps": 56,
+      "side_achievements": {},
+      "planning_ms_per_step": 219.05671838404876,
+      "wall_time_s": 13.59027647972107,
+      "episode": 50
+    },
+    {
+      "condition": "hwm",
+      "achievement": "collect_iron",
+      "seed": 151,
+      "success": false,
+      "steps": 188,
+      "side_achievements": {},
+      "planning_ms_per_step": 218.8298454547816,
+      "wall_time_s": 43.447348833084106,
+      "episode": 51
+    },
+    {
+      "condition": "hwm",
+      "achievement": "collect_wood",
+      "seed": 152,
+      "success": false,
+      "steps": 238,
+      "side_achievements": {},
+      "planning_ms_per_step": 218.9228750937501,
+      "wall_time_s": 54.78975296020508,
+      "episode": 52
+    },
+    {
+      "condition": "hwm",
+      "achievement": "collect_drink",
+      "seed": 153,
+      "success": false,
+      "steps": 175,
+      "side_achievements": {
+        "collect_sapling": 85,
+        "wake_up": 109,
+        "place_plant": 112,
+        "collect_wood": 156
+      },
+      "planning_ms_per_step": 218.72963328446662,
+      "wall_time_s": 40.425782203674316,
+      "episode": 53
+    },
+    {
+      "condition": "hwm",
+      "achievement": "eat_cow",
+      "seed": 154,
+      "success": false,
+      "steps": 169,
+      "side_achievements": {
+        "collect_sapling": 24,
+        "place_plant": 34,
+        "wake_up": 62
+      },
+      "planning_ms_per_step": 218.61337090032342,
+      "wall_time_s": 39.09245491027832,
+      "episode": 54
+    },
+    {
+      "condition": "hwm",
+      "achievement": "place_table",
+      "seed": 155,
+      "success": false,
+      "steps": 186,
+      "side_achievements": {},
+      "planning_ms_per_step": 218.43595459296176,
+      "wall_time_s": 42.869081020355225,
+      "episode": 55
+    },
+    {
+      "condition": "hwm",
+      "achievement": "make_wood_pickaxe",
+      "seed": 156,
+      "success": false,
+      "steps": 210,
+      "side_achievements": {},
+      "planning_ms_per_step": 218.33831596055202,
+      "wall_time_s": 48.26797103881836,
+      "episode": 56
+    },
+    {
+      "condition": "hwm",
+      "achievement": "make_wood_sword",
+      "seed": 157,
+      "success": false,
+      "steps": 165,
+      "side_achievements": {
+        "collect_wood": 60,
+        "collect_sapling": 76,
+        "place_plant": 140
+      },
+      "planning_ms_per_step": 218.6876950729074,
+      "wall_time_s": 38.21258091926575,
+      "episode": 57
+    },
+    {
+      "condition": "hwm",
+      "achievement": "collect_stone",
+      "seed": 158,
+      "success": false,
+      "steps": 153,
+      "side_achievements": {},
+      "planning_ms_per_step": 218.86486567410768,
+      "wall_time_s": 35.50165891647339,
+      "episode": 58
+    },
+    {
+      "condition": "hwm",
+      "achievement": "defeat_zombie",
+      "seed": 159,
+      "success": false,
+      "steps": 70,
+      "side_achievements": {},
+      "planning_ms_per_step": 218.2375236547419,
+      "wall_time_s": 16.74488115310669,
+      "episode": 59
+    },
+    {
+      "condition": "hwm",
+      "achievement": "defeat_skeleton",
+      "seed": 160,
+      "success": false,
+      "steps": 225,
+      "side_achievements": {},
+      "planning_ms_per_step": 218.97764135566024,
+      "wall_time_s": 51.860400676727295,
+      "episode": 60
+    },
+    {
+      "condition": "hwm",
+      "achievement": "make_stone_pickaxe",
+      "seed": 161,
+      "success": false,
+      "steps": 62,
+      "side_achievements": {},
+      "planning_ms_per_step": 219.16414310614908,
+      "wall_time_s": 14.886228799819946,
+      "episode": 61
+    },
+    {
+      "condition": "hwm",
+      "achievement": "make_stone_sword",
+      "seed": 162,
+      "success": false,
+      "steps": 165,
+      "side_achievements": {},
+      "planning_ms_per_step": 219.16786644494894,
+      "wall_time_s": 38.261577129364014,
+      "episode": 62
+    },
+    {
+      "condition": "hwm",
+      "achievement": "collect_coal",
+      "seed": 163,
+      "success": false,
+      "steps": 172,
+      "side_achievements": {},
+      "planning_ms_per_step": 219.29588938825006,
+      "wall_time_s": 39.85311937332153,
+      "episode": 63
+    },
+    {
+      "condition": "hwm",
+      "achievement": "collect_iron",
+      "seed": 164,
+      "success": false,
+      "steps": 39,
+      "side_achievements": {},
+      "planning_ms_per_step": 218.6303809762765,
+      "wall_time_s": 9.654871463775635,
+      "episode": 64
+    },
+    {
+      "condition": "hwm_oracle",
+      "achievement": "collect_wood",
+      "seed": 100,
+      "success": false,
+      "steps": 207,
+      "side_achievements": {},
+      "planning_ms_per_step": 223.58133884119815,
+      "wall_time_s": 49.03469371795654,
+      "episode": 0
+    },
+    {
+      "condition": "hwm_oracle",
+      "achievement": "collect_drink",
+      "seed": 101,
+      "success": false,
+      "steps": 173,
+      "side_achievements": {
+        "collect_sapling": 60,
+        "place_plant": 62
+      },
+      "planning_ms_per_step": 236.99243445315457,
+      "wall_time_s": 43.13899779319763,
+      "episode": 1
+    },
+    {
+      "condition": "hwm_oracle",
+      "achievement": "eat_cow",
+      "seed": 102,
+      "success": false,
+      "steps": 160,
+      "side_achievements": {
+        "collect_sapling": 76,
+        "place_plant": 78,
+        "wake_up": 107
+      },
+      "planning_ms_per_step": 233.87861625524238,
+      "wall_time_s": 39.48918867111206,
+      "episode": 2
+    },
+    {
+      "condition": "hwm_oracle",
+      "achievement": "place_table",
+      "seed": 103,
+      "success": false,
+      "steps": 122,
+      "side_achievements": {},
+      "planning_ms_per_step": 220.24450887788515,
+      "wall_time_s": 28.639528036117554,
+      "episode": 3
+    },
+    {
+      "condition": "hwm_oracle",
+      "achievement": "make_wood_pickaxe",
+      "seed": 104,
+      "success": false,
+      "steps": 303,
+      "side_achievements": {},
+      "planning_ms_per_step": 217.50432139158053,
+      "wall_time_s": 69.11517429351807,
+      "episode": 4
+    },
+    {
+      "condition": "hwm_oracle",
+      "achievement": "make_wood_sword",
+      "seed": 105,
+      "success": false,
+      "steps": 201,
+      "side_achievements": {
+        "collect_drink": 124,
+        "collect_wood": 134,
+        "defeat_zombie": 193
+      },
+      "planning_ms_per_step": 225.22030610461437,
+      "wall_time_s": 47.622785806655884,
+      "episode": 5
+    },
+    {
+      "condition": "hwm_oracle",
+      "achievement": "collect_stone",
+      "seed": 106,
+      "success": false,
+      "steps": 157,
+      "side_achievements": {},
+      "planning_ms_per_step": 219.22076487569672,
+      "wall_time_s": 36.46181797981262,
+      "episode": 6
+    },
+    {
+      "condition": "hwm_oracle",
+      "achievement": "defeat_zombie",
+      "seed": 107,
+      "success": false,
+      "steps": 157,
+      "side_achievements": {
+        "collect_sapling": 8,
+        "place_plant": 20
+      },
+      "planning_ms_per_step": 220.55028127447056,
+      "wall_time_s": 36.67014479637146,
+      "episode": 7
+    },
+    {
+      "condition": "hwm_oracle",
+      "achievement": "defeat_skeleton",
+      "seed": 108,
+      "success": false,
+      "steps": 204,
+      "side_achievements": {},
+      "planning_ms_per_step": 219.55826698674582,
+      "wall_time_s": 47.20600867271423,
+      "episode": 8
+    },
+    {
+      "condition": "hwm_oracle",
+      "achievement": "make_stone_pickaxe",
+      "seed": 109,
+      "success": false,
+      "steps": 156,
+      "side_achievements": {},
+      "planning_ms_per_step": 219.8004367498633,
+      "wall_time_s": 36.30634093284607,
+      "episode": 9
+    },
+    {
+      "condition": "hwm_oracle",
+      "achievement": "make_stone_sword",
+      "seed": 110,
+      "success": false,
+      "steps": 193,
+      "side_achievements": {},
+      "planning_ms_per_step": 221.20244750859206,
+      "wall_time_s": 44.967904806137085,
+      "episode": 10
+    },
+    {
+      "condition": "hwm_oracle",
+      "achievement": "collect_coal",
+      "seed": 111,
+      "success": false,
+      "steps": 34,
+      "side_achievements": {},
+      "planning_ms_per_step": 219.6712597985478,
+      "wall_time_s": 8.579830884933472,
+      "episode": 11
+    },
+    {
+      "condition": "hwm_oracle",
+      "achievement": "collect_iron",
+      "seed": 112,
+      "success": false,
+      "steps": 57,
+      "side_achievements": {},
+      "planning_ms_per_step": 217.05258265137672,
+      "wall_time_s": 13.68887996673584,
+      "episode": 12
+    },
+    {
+      "condition": "hwm_oracle",
+      "achievement": "collect_wood",
+      "seed": 113,
+      "success": false,
+      "steps": 193,
+      "side_achievements": {},
+      "planning_ms_per_step": 221.91034002625264,
+      "wall_time_s": 45.08237266540527,
+      "episode": 13
+    },
+    {
+      "condition": "hwm_oracle",
+      "achievement": "collect_drink",
+      "seed": 114,
+      "success": false,
+      "steps": 181,
+      "side_achievements": {
+        "collect_sapling": 12,
+        "place_plant": 16,
+        "wake_up": 47
+      },
+      "planning_ms_per_step": 225.72519247373825,
+      "wall_time_s": 43.077157974243164,
+      "episode": 14
+    },
+    {
+      "condition": "hwm_oracle",
+      "achievement": "eat_cow",
+      "seed": 115,
+      "success": false,
+      "steps": 188,
+      "side_achievements": {
+        "wake_up": 50,
+        "collect_sapling": 83,
+        "place_plant": 86
+      },
+      "planning_ms_per_step": 230.3689405163552,
+      "wall_time_s": 45.60179281234741,
+      "episode": 15
+    },
+    {
+      "condition": "hwm_oracle",
+      "achievement": "place_table",
+      "seed": 116,
+      "success": false,
+      "steps": 159,
+      "side_achievements": {},
+      "planning_ms_per_step": 219.7077805000656,
+      "wall_time_s": 37.014204025268555,
+      "episode": 16
+    },
+    {
+      "condition": "hwm_oracle",
+      "achievement": "make_wood_pickaxe",
+      "seed": 117,
+      "success": false,
+      "steps": 83,
+      "side_achievements": {},
+      "planning_ms_per_step": 232.6026583112866,
+      "wall_time_s": 20.78113865852356,
+      "episode": 17
+    },
+    {
+      "condition": "hwm_oracle",
+      "achievement": "make_wood_sword",
+      "seed": 118,
+      "success": false,
+      "steps": 144,
+      "side_achievements": {
+        "collect_sapling": 97
+      },
+      "planning_ms_per_step": 227.42395661771297,
+      "wall_time_s": 34.740272998809814,
+      "episode": 18
+    },
+    {
+      "condition": "hwm_oracle",
+      "achievement": "collect_stone",
+      "seed": 119,
+      "success": false,
+      "steps": 173,
+      "side_achievements": {},
+      "planning_ms_per_step": 219.6825765654703,
+      "wall_time_s": 40.161083936691284,
+      "episode": 19
+    },
+    {
+      "condition": "hwm_oracle",
+      "achievement": "defeat_zombie",
+      "seed": 120,
+      "success": false,
+      "steps": 181,
+      "side_achievements": {},
+      "planning_ms_per_step": 227.15084820738812,
+      "wall_time_s": 43.329740047454834,
+      "episode": 20
+    },
+    {
+      "condition": "hwm_oracle",
+      "achievement": "defeat_skeleton",
+      "seed": 121,
+      "success": false,
+      "steps": 161,
+      "side_achievements": {},
+      "planning_ms_per_step": 220.64984865162683,
+      "wall_time_s": 37.587531328201294,
+      "episode": 21
+    },
+    {
+      "condition": "hwm_oracle",
+      "achievement": "make_stone_pickaxe",
+      "seed": 122,
+      "success": false,
+      "steps": 204,
+      "side_achievements": {},
+      "planning_ms_per_step": 218.68085909598307,
+      "wall_time_s": 46.989825963974,
+      "episode": 22
+    },
+    {
+      "condition": "hwm_oracle",
+      "achievement": "make_stone_sword",
+      "seed": 123,
+      "success": false,
+      "steps": 114,
+      "side_achievements": {},
+      "planning_ms_per_step": 223.5785834491253,
+      "wall_time_s": 27.237061023712158,
+      "episode": 23
+    },
+    {
+      "condition": "hwm_oracle",
+      "achievement": "collect_coal",
+      "seed": 124,
+      "success": false,
+      "steps": 212,
+      "side_achievements": {},
+      "planning_ms_per_step": 217.43866936567258,
+      "wall_time_s": 48.60039019584656,
+      "episode": 24
+    },
+    {
+      "condition": "hwm_oracle",
+      "achievement": "collect_iron",
+      "seed": 125,
+      "success": false,
+      "steps": 209,
+      "side_achievements": {},
+      "planning_ms_per_step": 216.6293367440478,
+      "wall_time_s": 47.73180317878723,
+      "episode": 25
+    },
+    {
+      "condition": "hwm_oracle",
+      "achievement": "collect_wood",
+      "seed": 126,
+      "success": false,
+      "steps": 338,
+      "side_achievements": {},
+      "planning_ms_per_step": 219.96692858482078,
+      "wall_time_s": 77.68755459785461,
+      "episode": 26
+    },
+    {
+      "condition": "hwm_oracle",
+      "achievement": "collect_drink",
+      "seed": 127,
+      "success": false,
+      "steps": 96,
+      "side_achievements": {
+        "collect_sapling": 13,
+        "place_plant": 15
+      },
+      "planning_ms_per_step": 231.76380927907303,
+      "wall_time_s": 23.760385513305664,
+      "episode": 27
+    },
+    {
+      "condition": "hwm_oracle",
+      "achievement": "eat_cow",
+      "seed": 128,
+      "success": false,
+      "steps": 221,
+      "side_achievements": {
+        "wake_up": 92,
+        "collect_wood": 98,
+        "collect_sapling": 213
+      },
+      "planning_ms_per_step": 223.32805126264893,
+      "wall_time_s": 51.965344190597534,
+      "episode": 28
+    },
+    {
+      "condition": "hwm_oracle",
+      "achievement": "place_table",
+      "seed": 129,
+      "success": false,
+      "steps": 168,
+      "side_achievements": {},
+      "planning_ms_per_step": 219.84390964332437,
+      "wall_time_s": 39.05151700973511,
+      "episode": 29
+    },
+    {
+      "condition": "hwm_oracle",
+      "achievement": "make_wood_pickaxe",
+      "seed": 130,
+      "success": false,
+      "steps": 210,
+      "side_achievements": {},
+      "planning_ms_per_step": 219.48508475685404,
+      "wall_time_s": 48.536134481430054,
+      "episode": 30
+    },
+    {
+      "condition": "hwm_oracle",
+      "achievement": "make_wood_sword",
+      "seed": 131,
+      "success": false,
+      "steps": 145,
+      "side_achievements": {
+        "wake_up": 60,
+        "collect_sapling": 104,
+        "collect_wood": 126
+      },
+      "planning_ms_per_step": 227.68266010901024,
+      "wall_time_s": 35.006383657455444,
+      "episode": 31
+    },
+    {
+      "condition": "hwm_oracle",
+      "achievement": "collect_stone",
+      "seed": 132,
+      "success": false,
+      "steps": 162,
+      "side_achievements": {},
+      "planning_ms_per_step": 219.7710040864753,
+      "wall_time_s": 37.69261407852173,
+      "episode": 32
+    },
+    {
+      "condition": "hwm_oracle",
+      "achievement": "defeat_zombie",
+      "seed": 133,
+      "success": false,
+      "steps": 152,
+      "side_achievements": {},
+      "planning_ms_per_step": 234.67592520051096,
+      "wall_time_s": 37.67155957221985,
+      "episode": 33
+    },
+    {
+      "condition": "hwm_oracle",
+      "achievement": "defeat_skeleton",
+      "seed": 134,
+      "success": false,
+      "steps": 93,
+      "side_achievements": {},
+      "planning_ms_per_step": 223.94874625869335,
+      "wall_time_s": 22.42686629295349,
+      "episode": 34
+    },
+    {
+      "condition": "hwm_oracle",
+      "achievement": "make_stone_pickaxe",
+      "seed": 135,
+      "success": false,
+      "steps": 153,
+      "side_achievements": {},
+      "planning_ms_per_step": 219.49870795547184,
+      "wall_time_s": 35.64978790283203,
+      "episode": 35
+    },
+    {
+      "condition": "hwm_oracle",
+      "achievement": "make_stone_sword",
+      "seed": 136,
+      "success": false,
+      "steps": 29,
+      "side_achievements": {},
+      "planning_ms_per_step": 239.64140885348976,
+      "wall_time_s": 8.042917013168335,
+      "episode": 36
+    },
+    {
+      "condition": "hwm_oracle",
+      "achievement": "collect_coal",
+      "seed": 137,
+      "success": false,
+      "steps": 165,
+      "side_achievements": {},
+      "planning_ms_per_step": 217.4268887462941,
+      "wall_time_s": 37.94852900505066,
+      "episode": 37
+    },
+    {
+      "condition": "hwm_oracle",
+      "achievement": "collect_iron",
+      "seed": 138,
+      "success": false,
+      "steps": 164,
+      "side_achievements": {},
+      "planning_ms_per_step": 217.19200475277697,
+      "wall_time_s": 37.713385581970215,
+      "episode": 38
+    },
+    {
+      "condition": "hwm_oracle",
+      "achievement": "collect_wood",
+      "seed": 139,
+      "success": false,
+      "steps": 187,
+      "side_achievements": {},
+      "planning_ms_per_step": 222.45120694412586,
+      "wall_time_s": 43.88241529464722,
+      "episode": 39
+    },
+    {
+      "condition": "hwm_oracle",
+      "achievement": "collect_drink",
+      "seed": 140,
+      "success": false,
+      "steps": 212,
+      "side_achievements": {
+        "wake_up": 47,
+        "collect_sapling": 99,
+        "place_plant": 107
+      },
+      "planning_ms_per_step": 227.34819037207174,
+      "wall_time_s": 50.71457505226135,
+      "episode": 40
+    },
+    {
+      "condition": "hwm_oracle",
+      "achievement": "eat_cow",
+      "seed": 141,
+      "success": false,
+      "steps": 185,
+      "side_achievements": {
+        "wake_up": 43,
+        "collect_wood": 69,
+        "collect_sapling": 135,
+        "place_plant": 145
+      },
+      "planning_ms_per_step": 228.40789809218936,
+      "wall_time_s": 44.54709339141846,
+      "episode": 41
+    },
+    {
+      "condition": "hwm_oracle",
+      "achievement": "place_table",
+      "seed": 142,
+      "success": false,
+      "steps": 211,
+      "side_achievements": {},
+      "planning_ms_per_step": 219.06093408252107,
+      "wall_time_s": 48.69771385192871,
+      "episode": 42
+    },
+    {
+      "condition": "hwm_oracle",
+      "achievement": "make_wood_pickaxe",
+      "seed": 143,
+      "success": false,
+      "steps": 171,
+      "side_achievements": {},
+      "planning_ms_per_step": 219.4245411573272,
+      "wall_time_s": 39.696820974349976,
+      "episode": 43
+    },
+    {
+      "condition": "hwm_oracle",
+      "achievement": "make_wood_sword",
+      "seed": 144,
+      "success": false,
+      "steps": 172,
+      "side_achievements": {},
+      "planning_ms_per_step": 226.44207577849195,
+      "wall_time_s": 41.148813247680664,
+      "episode": 44
+    },
+    {
+      "condition": "hwm_oracle",
+      "achievement": "collect_stone",
+      "seed": 145,
+      "success": false,
+      "steps": 153,
+      "side_achievements": {},
+      "planning_ms_per_step": 220.15528526960634,
+      "wall_time_s": 35.667062520980835,
+      "episode": 45
+    },
+    {
+      "condition": "hwm_oracle",
+      "achievement": "defeat_zombie",
+      "seed": 146,
+      "success": false,
+      "steps": 143,
+      "side_achievements": {
+        "collect_sapling": 10,
+        "place_plant": 19
+      },
+      "planning_ms_per_step": 221.72802883376193,
+      "wall_time_s": 33.642401695251465,
+      "episode": 46
+    },
+    {
+      "condition": "hwm_oracle",
+      "achievement": "defeat_skeleton",
+      "seed": 147,
+      "success": false,
+      "steps": 94,
+      "side_achievements": {},
+      "planning_ms_per_step": 223.97190966504687,
+      "wall_time_s": 22.61613941192627,
+      "episode": 47
+    },
+    {
+      "condition": "hwm_oracle",
+      "achievement": "make_stone_pickaxe",
+      "seed": 148,
+      "success": false,
+      "steps": 84,
+      "side_achievements": {},
+      "planning_ms_per_step": 223.45458046488818,
+      "wall_time_s": 20.26515483856201,
+      "episode": 48
+    },
+    {
+      "condition": "hwm_oracle",
+      "achievement": "make_stone_sword",
+      "seed": 149,
+      "success": false,
+      "steps": 183,
+      "side_achievements": {},
+      "planning_ms_per_step": 222.06447461793005,
+      "wall_time_s": 42.89393973350525,
+      "episode": 49
+    },
+    {
+      "condition": "hwm_oracle",
+      "achievement": "collect_coal",
+      "seed": 150,
+      "success": false,
+      "steps": 56,
+      "side_achievements": {},
+      "planning_ms_per_step": 218.55599439835973,
+      "wall_time_s": 13.555967807769775,
+      "episode": 50
+    },
+    {
+      "condition": "hwm_oracle",
+      "achievement": "collect_iron",
+      "seed": 151,
+      "success": false,
+      "steps": 188,
+      "side_achievements": {},
+      "planning_ms_per_step": 216.89875090019183,
+      "wall_time_s": 43.06902003288269,
+      "episode": 51
+    },
+    {
+      "condition": "hwm_oracle",
+      "achievement": "collect_wood",
+      "seed": 152,
+      "success": false,
+      "steps": 238,
+      "side_achievements": {},
+      "planning_ms_per_step": 225.15923073593558,
+      "wall_time_s": 56.24999761581421,
+      "episode": 52
+    },
+    {
+      "condition": "hwm_oracle",
+      "achievement": "collect_drink",
+      "seed": 153,
+      "success": false,
+      "steps": 154,
+      "side_achievements": {
+        "collect_wood": 79,
+        "collect_sapling": 120,
+        "place_plant": 130
+      },
+      "planning_ms_per_step": 239.60071314706818,
+      "wall_time_s": 38.87176728248596,
+      "episode": 53
+    },
+    {
+      "condition": "hwm_oracle",
+      "achievement": "eat_cow",
+      "seed": 154,
+      "success": false,
+      "steps": 169,
+      "side_achievements": {
+        "collect_sapling": 28,
+        "place_plant": 34,
+        "wake_up": 59,
+        "collect_drink": 143
+      },
+      "planning_ms_per_step": 223.57803336261998,
+      "wall_time_s": 39.93097472190857,
+      "episode": 54
+    },
+    {
+      "condition": "hwm_oracle",
+      "achievement": "place_table",
+      "seed": 155,
+      "success": false,
+      "steps": 186,
+      "side_achievements": {},
+      "planning_ms_per_step": 219.23429906488425,
+      "wall_time_s": 43.0016725063324,
+      "episode": 55
+    },
+    {
+      "condition": "hwm_oracle",
+      "achievement": "make_wood_pickaxe",
+      "seed": 156,
+      "success": false,
+      "steps": 210,
+      "side_achievements": {},
+      "planning_ms_per_step": 218.9362237584733,
+      "wall_time_s": 48.37822437286377,
+      "episode": 56
+    },
+    {
+      "condition": "hwm_oracle",
+      "achievement": "make_wood_sword",
+      "seed": 157,
+      "success": false,
+      "steps": 208,
+      "side_achievements": {
+        "collect_sapling": 11,
+        "collect_wood": 65,
+        "place_plant": 76
+      },
+      "planning_ms_per_step": 222.86370476313795,
+      "wall_time_s": 48.852057218551636,
+      "episode": 57
+    },
+    {
+      "condition": "hwm_oracle",
+      "achievement": "collect_stone",
+      "seed": 158,
+      "success": false,
+      "steps": 153,
+      "side_achievements": {},
+      "planning_ms_per_step": 220.07963711432382,
+      "wall_time_s": 35.677130699157715,
+      "episode": 58
+    },
+    {
+      "condition": "hwm_oracle",
+      "achievement": "defeat_zombie",
+      "seed": 159,
+      "success": false,
+      "steps": 118,
+      "side_achievements": {
+        "collect_sapling": 50,
+        "place_plant": 52
+      },
+      "planning_ms_per_step": 236.82229206660543,
+      "wall_time_s": 29.779658317565918,
+      "episode": 59
+    },
+    {
+      "condition": "hwm_oracle",
+      "achievement": "defeat_skeleton",
+      "seed": 160,
+      "success": false,
+      "steps": 234,
+      "side_achievements": {},
+      "planning_ms_per_step": 221.14477312972403,
+      "wall_time_s": 54.38864541053772,
+      "episode": 60
+    },
+    {
+      "condition": "hwm_oracle",
+      "achievement": "make_stone_pickaxe",
+      "seed": 161,
+      "success": false,
+      "steps": 93,
+      "side_achievements": {},
+      "planning_ms_per_step": 222.15629385043215,
+      "wall_time_s": 22.184503316879272,
+      "episode": 61
+    },
+    {
+      "condition": "hwm_oracle",
+      "achievement": "make_stone_sword",
+      "seed": 162,
+      "success": false,
+      "steps": 165,
+      "side_achievements": {},
+      "planning_ms_per_step": 223.8633878754847,
+      "wall_time_s": 39.04005026817322,
+      "episode": 62
+    },
+    {
+      "condition": "hwm_oracle",
+      "achievement": "collect_coal",
+      "seed": 163,
+      "success": false,
+      "steps": 172,
+      "side_achievements": {},
+      "planning_ms_per_step": 218.22781391918312,
+      "wall_time_s": 39.659905433654785,
+      "episode": 63
+    },
+    {
+      "condition": "hwm_oracle",
+      "achievement": "collect_iron",
+      "seed": 164,
+      "success": false,
+      "steps": 39,
+      "side_achievements": {},
+      "planning_ms_per_step": 216.8200043722605,
+      "wall_time_s": 9.576040744781494,
+      "episode": 64
+    }
+  ],
+  "aggregates": {
+    "hwm": {
+      "n_episodes": 65,
+      "n_success": 1,
+      "success_rate": 0.015384615384615385,
+      "mean_steps": 151.4923076923077,
+      "mean_steps_success": 62.0,
+      "mean_planning_ms": 218.71552740888768,
+      "per_achievement": {
+        "collect_wood": {
+          "n_episodes": 5,
+          "success_rate": 0.0
+        },
+        "collect_drink": {
+          "n_episodes": 5,
+          "success_rate": 0.2
+        },
+        "eat_cow": {
+          "n_episodes": 5,
+          "success_rate": 0.0
+        },
+        "place_table": {
+          "n_episodes": 5,
+          "success_rate": 0.0
+        },
+        "make_wood_pickaxe": {
+          "n_episodes": 5,
+          "success_rate": 0.0
+        },
+        "make_wood_sword": {
+          "n_episodes": 5,
+          "success_rate": 0.0
+        },
+        "collect_stone": {
+          "n_episodes": 5,
+          "success_rate": 0.0
+        },
+        "defeat_zombie": {
+          "n_episodes": 5,
+          "success_rate": 0.0
+        },
+        "defeat_skeleton": {
+          "n_episodes": 5,
+          "success_rate": 0.0
+        },
+        "make_stone_pickaxe": {
+          "n_episodes": 5,
+          "success_rate": 0.0
+        },
+        "make_stone_sword": {
+          "n_episodes": 5,
+          "success_rate": 0.0
+        },
+        "collect_coal": {
+          "n_episodes": 5,
+          "success_rate": 0.0
+        },
+        "collect_iron": {
+          "n_episodes": 5,
+          "success_rate": 0.0
+        }
+      }
+    },
+    "hwm_oracle": {
+      "n_episodes": 65,
+      "n_success": 0,
+      "success_rate": 0.0,
+      "mean_steps": 163.07692307692307,
+      "mean_steps_success": null,
+      "mean_planning_ms": 223.2108086695351,
+      "per_achievement": {
+        "collect_wood": {
+          "n_episodes": 5,
+          "success_rate": 0.0
+        },
+        "collect_drink": {
+          "n_episodes": 5,
+          "success_rate": 0.0
+        },
+        "eat_cow": {
+          "n_episodes": 5,
+          "success_rate": 0.0
+        },
+        "place_table": {
+          "n_episodes": 5,
+          "success_rate": 0.0
+        },
+        "make_wood_pickaxe": {
+          "n_episodes": 5,
+          "success_rate": 0.0
+        },
+        "make_wood_sword": {
+          "n_episodes": 5,
+          "success_rate": 0.0
+        },
+        "collect_stone": {
+          "n_episodes": 5,
+          "success_rate": 0.0
+        },
+        "defeat_zombie": {
+          "n_episodes": 5,
+          "success_rate": 0.0
+        },
+        "defeat_skeleton": {
+          "n_episodes": 5,
+          "success_rate": 0.0
+        },
+        "make_stone_pickaxe": {
+          "n_episodes": 5,
+          "success_rate": 0.0
+        },
+        "make_stone_sword": {
+          "n_episodes": 5,
+          "success_rate": 0.0
+        },
+        "collect_coal": {
+          "n_episodes": 5,
+          "success_rate": 0.0
+        },
+        "collect_iron": {
+          "n_episodes": 5,
+          "success_rate": 0.0
+        }
+      }
+    }
+  },
+  "config": {
+    "n_episodes": 65,
+    "seed_start": 100,
+    "max_steps": 1000,
+    "checkpoint": "/home/users/aho13/plan/data/crafter/world_model/lewm_human_ft/best.pt",
+    "hwm_checkpoint": "/home/users/aho13/plan/data/crafter/world_model/hwm_high_chain_strong/best.pt",
+    "ridge_model": "/home/users/aho13/plan/data/crafter/wm_cache/ridge_model.pkl",
+    "latents_cache": "/home/users/aho13/plan/data/crafter/wm_cache/latents.npz",
+    "goal_library": "/home/users/aho13/plan/data/crafter/wm_cache/goal_library.npz",
+    "traj_dataset": "/home/users/aho13/plan/data/crafter/wm_cache/trajectory_dataset.npz",
+    "results_path": "/home/users/aho13/plan/results/results_chain_strong.json",
+    "condition_arg": "hwm_oracle",
+    "achievements_up_to": "collect_iron",
+    "n_workers": 1,
+    "cost": "probe",
+    "probe_path": "/home/users/aho13/plan/data/crafter/wm_cache/probes.pkl",
+    "checkpoint_resolved": "/usr/project/xtmp/aho13/crafter/world_model/lewm_human_ft/best.pt",
+    "hwm_checkpoint_resolved": "/usr/project/xtmp/aho13/crafter/world_model/hwm_high_chain_strong/best.pt",
+    "ridge_model_resolved": "/usr/project/xtmp/aho13/crafter/wm_cache/ridge_model.pkl",
+    "latents_cache_resolved": "/usr/project/xtmp/aho13/crafter/wm_cache/latents.npz",
+    "goal_library_resolved": "/usr/project/xtmp/aho13/crafter/wm_cache/goal_library.npz",
+    "traj_dataset_resolved": "/usr/project/xtmp/aho13/crafter/wm_cache/trajectory_dataset.npz",
+    "results_path_resolved": "/home/users/aho13/plan/results/results_chain_strong.json",
+    "conditions_expanded": [
+      "hwm_oracle"
+    ],
+    "seed_convention": "Crafter Env(seed) uses seed = seed_start + ep where ep is the 0-based episode index within that condition. Changing n_episodes or goal_library changes which achievement pairs with which seed.",
+    "git_commit": "8a7812edc61c350743a4710fa33cd76b925367c7",
+    "slurm_job_id": "11207030",
+    "torch_version": "2.11.0+cu128"
+  }
+}

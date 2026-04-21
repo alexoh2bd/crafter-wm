@@ -1,0 +1,63 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# LeWM human-data finetune config
+#
+# Finetunes lewm_teacher_deep/best.pt on the 95 train human episodes.
+# Encoder is frozen; only the predictor is updated.  The 4-step open-loop
+# rollout loss closes the teacher-forcing / autoregressive gap on human
+# crafting transitions without disturbing the encoder's learned representations.
+#
+# Usage (via train_wm_teach.sh):
+#   bash src/scripts/train_wm_teach.sh \
+#       --config src/config_finetune_human.yaml \
+#       --data   data/crafter/human/crafter_human_train.pkl \
+#       --resume data/crafter/world_model/lewm_teacher_deep/best.pt
+# ─────────────────────────────────────────────────────────────────────────────
+
+# ── Dataset / sequencing ──────────────────────────────────────────────────────
+dataset:
+  context_len: 16
+  img_size: 64
+
+# ── LeWM model architecture (must match lewm_teacher_deep/best.pt) ────────────
+model:
+  latent_dim: 256
+  patch_size: 8
+  encoder_depth: 12
+  encoder_heads: 3
+  predictor_depth: 6
+  predictor_heads: 16
+  sigreg_M: 1024
+  sigreg_lambda: 0.1
+  dropout: 0.1
+
+# ── Training ──────────────────────────────────────────────────────────────────
+training:
+  epochs: 20              # longer than PPO finetune — human data is ~95 short eps
+  batch_size: 128
+  lr: 1.0e-4              # conservative LR — finetuning, not training from scratch
+  weight_decay: 1.0e-4
+  warmup_steps: 200
+  total_steps: 50000
+  log_every: 50
+  seed: 0
+
+  # Multi-step rollout loss: unrolls the predictor open-loop for 4 steps,
+  # supervised against ground-truth encoded latents with the same norm clamp
+  # used at inference.  Closes the teacher-forcing / autoregressive gap on
+  # human crafting and tech-tree transitions.
+  rollout_steps: 4
+  rollout_loss_weight: 0.1
+
+  # Freeze encoder — preserves the achievement-discriminative representations
+  # confirmed by the linear probe (AUC > 0.98 on collect_wood).
+  freeze_encoder: true
+
+# ── Infrastructure ────────────────────────────────────────────────────────────
+infra:
+  logdir: data/crafter/world_model/lewm_human_ft
+
+# ── Weights & Biases ──────────────────────────────────────────────────────────
+wandb:
+  use_wandb: true
+  wandb_project: lewm-crafter
+  wandb_run_name: lewm-human-finetune
