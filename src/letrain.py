@@ -194,13 +194,13 @@ def train(args):
                         'epoch': epoch,
                         'step': global_step,
                         'loss': out['loss'].item(),
-                        'pred_loss': out['pred_loss'],
-                        'sigreg_loss': out['sigreg_loss'],
+                        'pred_loss': float(out['pred_loss']),
+                        'sigreg_loss': float(out['sigreg_loss']),
                         'lr': lr,
                         'time': time.time() - t0,
                     }
                     if 'rollout_loss' in out:
-                        log_entry['rollout_loss'] = out['rollout_loss']
+                        log_entry['rollout_loss'] = float(out['rollout_loss'])
                     log(log_entry)
                     t0 = time.time()
 

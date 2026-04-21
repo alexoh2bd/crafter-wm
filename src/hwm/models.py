@@ -385,6 +385,7 @@ def load_lewm(
         sigreg_M       = saved.get("sigreg_M",      1024),
         sigreg_lambda  = saved.get("sigreg_lambda",  0.1),
         dropout        = saved.get("dropout",         0.1),
+        predictor_hidden_dim=saved.get("predictor_hidden_dim", None),
     ).to(device)
 
     # strict=False: latent_scale was added as a registered buffer after some

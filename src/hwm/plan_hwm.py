@@ -2,8 +2,9 @@
 
 High-level CEM (Gaussian, continuous) over H_hi=3 macro-actions in R^256,
   using HighLevelPredictor to predict the latent H_hi steps ahead.
-Low-level CEM (integer, categorical) over H_lo=10 primitive actions,
-  using LeWM.rollout to reach the high-level subgoal.
+Low-level planning over H_lo=10 primitives: CEM (``cem_low``) or, by default,
+  gradient-based Gumbel-softmax + Adam (``grad_plan_low``) with a differentiable
+  rollout that mirrors ``LeWM.rollout`` without calling the no-grad wrapper.
 
 Replanning schedule:
   - High-level reruns every H_lo steps OR when ‖z_curr - z_subgoal‖₁ < threshold
@@ -18,6 +19,7 @@ Oracle ablation mode (--oracle):
 
 Standalone usage:
     python src/hwm/plan_hwm.py --achievement collect_wood --n_episodes 3
+    (Per-step actions and replan lines print by default; pass --quiet to hide.)
 """
 
 from __future__ import annotations
@@ -35,11 +37,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from hwm.constants import (
     ACTION_DIM,
     CHECKPOINT,
+    CRAFTER_ACTIONS,
     GOAL_LIBRARY,
     HWM_HIGH_CKPT,
     LATENT_DIM,
     LATENTS_CACHE,
-    MACRO_DIM,
     TRAJ_DATASET,
 )
 from hwm.models import (
@@ -257,6 +259,65 @@ def cem_low(
     return int(torch.argmax(logits[0]).item())
 
 
+# ── Gradient-based low-level planner (Gumbel-softmax + differentiable rollout) ─
+
+def grad_plan_low(
+    lewm,
+    z_curr: torch.Tensor,
+    z_subgoal: torch.Tensor,
+    H: int = 10,
+    n_steps: int = 30,
+    lr: float = 0.05,
+    tau_start: float = 1.0,
+    tau_end: float = 0.1,
+    device: torch.device = torch.device("cpu"),
+    cost_fn=None,
+) -> int:
+    """Low-level planner via Gumbel-softmax and Adam on logits.
+
+    Mirrors ``LeWM.rollout`` *without* calling ``lewm.rollout()`` (it is
+    ``@torch.no_grad``), so gradients reach the relaxed action logits.
+    """
+    ctx = lewm.predictor.context_len
+    latent_scale = lewm.latent_scale
+
+    logits = torch.zeros(H, ACTION_DIM, device=device, requires_grad=True)
+    opt = torch.optim.Adam([logits], lr=lr)
+
+    with torch.enable_grad():
+        for i in range(n_steps):
+            tau = tau_start * (tau_end / tau_start) ** (i / max(n_steps - 1, 1))
+
+            a_soft = F.gumbel_softmax(logits, tau=tau, hard=False)
+            a_soft_b = a_soft.unsqueeze(0)
+
+            z_history = [z_curr.detach()]
+            for t in range(H):
+                window = z_history[-ctx:]
+                z_stack = torch.stack(window, dim=1)
+                a_start = max(0, t + 1 - ctx)
+                a_stack = a_soft_b[:, a_start : t + 1]
+                z_hat = lewm.predictor(z_stack, a_stack)
+                z_next = z_hat[:, -1]
+                z_next = F.normalize(z_next, dim=-1) * latent_scale
+                z_history.append(z_next)
+
+            z_final = z_history[-1]
+
+            if cost_fn is not None:
+                cost_np = cost_fn(z_final.detach().cpu().numpy())
+                _ = float(cost_np[0])
+                loss_diff = F.l1_loss(z_final, z_subgoal.detach())
+            else:
+                loss_diff = F.l1_loss(z_final, z_subgoal.detach())
+
+            opt.zero_grad()
+            loss_diff.backward()
+            opt.step()
+
+    return int(torch.argmax(logits[0]).item())
+
+
 # ── Oracle subgoal: nearest midpoint frame from training trajectories ─────────
 
 def get_oracle_subgoal(
@@ -351,18 +412,27 @@ def run_episode(
     goal_source_ep_idx: int = 0,
     macro_action_mean: Optional[torch.Tensor] = None,
     macro_action_std: Optional[torch.Tensor] = None,
+    planner: str = "grad",
+    grad_n_steps: int = 30,
+    grad_lr: float = 0.05,
+    grad_tau_start: float = 1.0,
+    grad_tau_end: float = 0.1,
 ) -> dict:
     """Run one HWM episode.
 
     Args:
         cost_fn:             Optional probe cost callable; applied to both
                              high-level CEM (subgoal selection) and low-level
-                             CEM (primitive action selection).  See cem_low
-                             for signature.
+                             planning.  See ``cem_low`` / ``grad_plan_low``.
         goal_source_ep_idx:  Episode index (in latents.npz trajectory_boundaries)
                              of the human trajectory that achieved the goal.
                              Used only when oracle=True to locate the correct
                              midpoint latent.
+        planner:             ``\"cem\"`` or ``\"grad\"`` for low-level primitive
+                             selection (default ``\"grad\"`` = Gumbel + differentiable
+                             rollout).
+        grad_n_steps:        Adam steps for ``grad_plan_low``.
+        grad_lr, grad_tau_start, grad_tau_end: Gumbel-softmax schedule for grad planner.
     """
     import crafter
     import time
@@ -425,12 +495,32 @@ def run_episode(
                       f"|z_sub - z_goal|₁={d_to_goal:.2f}")
 
         # Low-level plan toward subgoal
-        action = cem_low(
-            lewm, z_curr, z_subgoal,
-            H=H_lo, n_samples=n_samples_lo,
-            n_elite=n_elite_lo, n_iters=n_iters, device=device,
-            cost_fn=cost_fn,
-        )
+        assert z_subgoal is not None
+        if planner == "grad":
+            action = grad_plan_low(
+                lewm, z_curr, z_subgoal,
+                H=H_lo, n_steps=grad_n_steps, lr=grad_lr,
+                tau_start=grad_tau_start, tau_end=grad_tau_end,
+                device=device, cost_fn=cost_fn,
+            )
+        else:
+            action = cem_low(
+                lewm, z_curr, z_subgoal,
+                H=H_lo, n_samples=n_samples_lo,
+                n_elite=n_elite_lo, n_iters=n_iters, device=device,
+                cost_fn=cost_fn,
+            )
+        if verbose:
+            aname = (
+                CRAFTER_ACTIONS[action]
+                if 0 <= action < len(CRAFTER_ACTIONS)
+                else "?"
+            )
+            d_sub = F.l1_loss(z_curr, z_subgoal, reduction="none").sum().item()
+            print(
+                f"  [hwm] step={step}  action={action:2d} ({aname})  "
+                f"|z_curr - z_sub|₁={d_sub:.2f}"
+            )
         planning_times.append((time.perf_counter() - t0) * 1000)
         steps_since_replan += 1
 
@@ -494,6 +584,21 @@ def main() -> None:
     parser.add_argument("--threshold",     type=float, default=2.0)
     parser.add_argument("--oracle",        action="store_true",
                         help="Use oracle subgoals from human trajectories")
+    parser.add_argument(
+        "--planner",
+        default="grad",
+        choices=["cem", "grad"],
+        help="Low-level planner: cem (CEM) or grad (Gumbel-softmax + Adam, default)",
+    )
+    parser.add_argument("--grad_n_steps", type=int, default=30)
+    parser.add_argument("--grad_lr", type=float, default=0.05)
+    parser.add_argument("--grad_tau_start", type=float, default=1.0)
+    parser.add_argument("--grad_tau_end", type=float, default=0.1)
+    parser.add_argument(
+        "--quiet",
+        action="store_true",
+        help="Suppress per-step action lines and other verbose logs",
+    )
     args = parser.parse_args()
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -523,9 +628,14 @@ def main() -> None:
             device=device, oracle=args.oracle,
             traj_dataset_path=args.traj_dataset,
             latents_path=args.latents_cache,
-            verbose=True,
+            verbose=not args.quiet,
             macro_action_mean=macro_mean,
             macro_action_std=macro_std,
+            planner=args.planner,
+            grad_n_steps=args.grad_n_steps,
+            grad_lr=args.grad_lr,
+            grad_tau_start=args.grad_tau_start,
+            grad_tau_end=args.grad_tau_end,
         )
         print(result)
 

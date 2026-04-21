@@ -5,7 +5,10 @@ Predictor: Causal Transformer with AdaLN action conditioning
 Loss: MSE + SIGReg(lambda=0.1)
 """
 
+from __future__ import annotations
+
 import random
+from typing import Optional
 
 import torch
 import torch.nn as nn
@@ -214,36 +217,46 @@ class Predictor(nn.Module):
     Action conditioning via AdaLN at each layer.
     Predicts z_{t+1} from history of z_{1:t} and a_{1:t}.
     Paper: ~10M params
+
+    When hidden_dim > latent_dim (e.g. ViT-S width 384 vs latent 256), the
+    sequence runs in hidden_dim; input_proj maps z up and output projector
+    maps back to latent_dim.
     """
     def __init__(self, latent_dim: int = 256, action_dim: int = 17,
                  depth: int = 6, num_heads: int = 16,
                  mlp_ratio: float = 4.0, dropout: float = 0.1,
-                 context_len: int = 16):
+                 context_len: int = 16,
+                 hidden_dim: Optional[int] = None):
         super().__init__()
         self.latent_dim = latent_dim
         self.context_len = context_len
+        h = hidden_dim if hidden_dim is not None else latent_dim
+        self.hidden_dim = h
 
-        # Action embedding -> conditioning signal
+        # Map encoder latents into predictor width (identity when h == latent_dim)
+        self.input_proj = (
+            nn.Linear(latent_dim, h) if h != latent_dim else nn.Identity()
+        )
+
+        # Action embedding -> conditioning signal (same width as predictor trunk)
         self.action_embed = nn.Sequential(
-            nn.Linear(action_dim, latent_dim),
+            nn.Linear(action_dim, h),
             nn.SiLU(),
-            nn.Linear(latent_dim, latent_dim),
+            nn.Linear(h, h),
         )
 
         # Positional embedding for sequence positions
-        self.pos_embed = nn.Parameter(
-            torch.zeros(1, context_len, latent_dim))
+        self.pos_embed = nn.Parameter(torch.zeros(1, context_len, h))
         nn.init.trunc_normal_(self.pos_embed, std=0.02)
 
         self.blocks = nn.ModuleList([
-            PredictorBlock(latent_dim, num_heads, latent_dim,
-                           mlp_ratio, dropout)
+            PredictorBlock(h, num_heads, h, mlp_ratio, dropout)
             for _ in range(depth)
         ])
 
-        # Output projector: MLP + BatchNorm (paper spec)
+        # Output projector: hidden -> latent + BatchNorm (paper spec)
         self.projector = nn.Sequential(
-            nn.Linear(latent_dim, latent_dim),
+            nn.Linear(h, latent_dim),
             nn.BatchNorm1d(latent_dim),
         )
 
@@ -254,11 +267,12 @@ class Predictor(nn.Module):
         Returns: z_hat: (B, T, latent_dim) — predicted next states
         """
         B, T, D = z_seq.shape
+        assert D == self.latent_dim
 
         # Embed actions -> conditioning
-        cond = self.action_embed(a_seq)  # (B, T, D)
+        cond = self.action_embed(a_seq)  # (B, T, H)
 
-        x = z_seq + self.pos_embed[:, :T, :]
+        x = self.input_proj(z_seq) + self.pos_embed[:, :T, :]
 
         # Build causal mask: position i can only attend to positions <= i
         causal_mask = torch.triu(
@@ -270,9 +284,9 @@ class Predictor(nn.Module):
             x = block(x, cond, causal_mask=causal_mask)
 
         # Flatten for BatchNorm then reshape
-        x_flat = x.reshape(B * T, D)
+        x_flat = x.reshape(B * T, self.hidden_dim)
         z_hat_flat = self.projector(x_flat)
-        z_hat = z_hat_flat.reshape(B, T, D)
+        z_hat = z_hat_flat.reshape(B, T, self.latent_dim)
 
         return z_hat
 
@@ -295,10 +309,16 @@ class LeWM(nn.Module):
         sigreg_M: int = 1024,
         sigreg_lambda: float = 0.1,
         dropout: float = 0.1,
+        predictor_hidden_dim: Optional[int] = None,
     ):
         super().__init__()
         self.latent_dim = latent_dim
         self.sigreg_lambda = sigreg_lambda
+        self.predictor_hidden_dim = (
+            predictor_hidden_dim
+            if predictor_hidden_dim is not None
+            else latent_dim
+        )
 
         self.encoder = ViTEncoder(
             img_size=img_size,
@@ -317,6 +337,7 @@ class LeWM(nn.Module):
             num_heads=predictor_heads,
             context_len=context_len,
             dropout=dropout,
+            hidden_dim=self.predictor_hidden_dim,
         )
 
         self.sigreg = SIGReg(embed_dim=latent_dim, M=sigreg_M)
@@ -341,15 +362,27 @@ class LeWM(nn.Module):
         """
         return self.predictor(z_seq, a_seq)
 
-    def forward(self, obs_seq, a_seq, rollout_steps: int = 0,
-                rollout_loss_weight: float = 0.1):
+    def forward(
+        self,
+        obs_seq,
+        a_seq,
+        rollout_steps: int = 0,
+        rollout_loss_weight: float = 0.1,
+        pred_action_weights: Optional[torch.Tensor] = None,
+    ):
         """
         obs_seq: (B, T, C, H, W)
         a_seq:   (B, T, action_dim)
         rollout_steps:       Number of open-loop steps for the rollout loss
                              (0 = disabled, backward-compatible default).
         rollout_loss_weight: Weight applied to rollout_loss in total_loss.
-        Returns dict with loss, pred_loss, sigreg_loss[, rollout_loss]
+        pred_action_weights: Optional (action_dim,) tensor of non-negative weights.
+                             When set, prediction MSE is averaged over time with
+                             per-step weights w[a_t] where a_t is the action index
+                             at each teacher-forcing step (same indexing as unweighted loss).
+        Returns dict with loss, pred_loss, sigreg_loss[, rollout_loss].
+        pred_loss / sigreg_loss are scalar tensors (not .item()) so torch.compile
+        does not graph-break; callers should float(...) or .item() when logging.
         """
         B, T, C, H, W = obs_seq.shape
 
@@ -362,12 +395,17 @@ class LeWM(nn.Module):
         z_hat = self.predictor(z_seq, a_seq)    # (B, T, D)
 
         # Prediction loss: z_hat[:, :-1] vs z_seq[:, 1:]
-        pred_loss = F.mse_loss(
-            z_hat[:, :-1],    # predicted z_{2:T}
-            z_seq[:, 1:].detach()  # target z_{2:T}
-            # Note: detach target only — no stop-gradient on encoder
-            # The encoder IS optimized through pred_loss
-        )
+        if pred_action_weights is None:
+            pred_loss = F.mse_loss(
+                z_hat[:, :-1],    # predicted z_{2:T}
+                z_seq[:, 1:].detach()  # target z_{2:T}
+            )
+        else:
+            err = (z_hat[:, :-1] - z_seq[:, 1:].detach()) ** 2  # (B, T-1, D)
+            per_step = err.mean(dim=-1)                         # (B, T-1)
+            a_idx = a_seq[:, :-1].argmax(dim=-1).long()         # (B, T-1)
+            w = pred_action_weights[a_idx].clamp(min=0.0)       # (B, T-1)
+            pred_loss = (per_step * w).mean()
 
         # SIGReg on all embeddings (step-wise, per paper Alg.1)
         # Apply per-timestep: average SIGReg over T steps
@@ -397,12 +435,12 @@ class LeWM(nn.Module):
                 acc = acc + F.mse_loss(z_r, z_seq[:, s + k + 1].detach())
             rollout_loss = acc / rollout_steps
             total_loss = total_loss + rollout_loss_weight * rollout_loss
-            rollout_loss_val = rollout_loss.item()
+            rollout_loss_val = rollout_loss.detach()
 
         out = {
             'loss': total_loss,
-            'pred_loss': pred_loss.item(),
-            'sigreg_loss': sigreg_loss.item(),
+            'pred_loss': pred_loss.detach(),
+            'sigreg_loss': sigreg_loss.detach(),
             'z_seq': z_seq,
             'z_hat': z_hat,
         }

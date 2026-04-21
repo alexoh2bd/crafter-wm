@@ -1,0 +1,79 @@
+# LeWM “balanced” training — PPO / GPU rollout pickles (ledata format).
+# Use with train_lewm_balanced.py or train_wm_ppo_gpu.sh
+
+data:
+  data_path: data/crafter/ppo_rollouts/crafter_teacher_data.pkl
+  # Optional second buffer (e.g. extra GPU-collected trajectories); null = disabled
+  extra_data_path: null
+
+dataset:
+  context_len: 16
+  seq_stride: null
+  val_frac: 0.05
+
+model:
+  latent_dim: 256
+  patch_size: 8
+  encoder_depth: 12
+  encoder_heads: 3
+  predictor_depth: 6
+  predictor_heads: 16
+  sigreg_M: 1024
+  sigreg_lambda: 0.1
+  dropout: 0.1
+
+training:
+  epochs: 100
+  batch_size: 512
+  # vs batch-128 ~3e-4: sqrt(512/128)=2 → ~6e-4 (watch val_loss; reduce if unstable)
+  lr: 6.0e-4
+  weight_decay: 1.0e-4
+  # Applied after total_steps is aligned: warmup_steps = floor(total_steps * warmup_frac)
+  warmup_frac: 0.05
+  total_steps: 200000
+  align_total_steps: true
+  compile_model: true
+  compile_mode: default
+  val_num_workers: 4
+  val_prefetch_factor: 4
+  # Overlap CPU collation with GPU (smoother utilization)
+  prefetch_batches: true
+  cudnn_benchmark: true
+  allow_tf32: true
+  log_every: 200
+  seed: 0
+  rollout_steps: 0
+  rollout_loss_weight: 0.1
+  resume: null
+  freeze_encoder: false
+
+balanced:
+  use_loss_weighting: true
+  weight_strategy: inv_sqrt
+  weight_cap: 10.0
+  effective_num_beta: 0.999
+  use_balanced_sampling: true
+  oversample_targets: [7, 8, 11, 12, 14]
+  oversample_factor: 5.0
+  noop_condition_ratio: 0.5
+  noop_mse_threshold: 1.0e-5
+
+infra:
+  logdir: data/crafter/world_model/lewm_balanced_ppo
+
+wandb:
+  use_wandb: true
+  wandb_project: lewm-crafter
+  wandb_run_name: lewm-balanced-ppo-gpu
+
+# Used by src/scripts/train_wm_ppo_gpu.sh (flattened into shell env as UPPER_SNAKE_CASE)
+pipeline:
+  # Optional: for manual `python src/ppo_smoke_rollout.py` only (not used by train_wm_ppo_gpu.sh)
+  teacher_checkpoint: data/crafter/ppo/ppo_teacher.pt
+  # LeWM smoke after balanced training (see lewm_smoke_rollout.py)
+  smoke_max_steps: 50
+  smoke_seed: 0
+  human_npz_dir: data/crafter/human
+  human_train_pkl: data/crafter/human/crafter_human_train.pkl
+  human_ft_logdir: data/crafter/world_model/lewm_balanced_human_ft
+  finetune_config: config_finetune_human.yaml
