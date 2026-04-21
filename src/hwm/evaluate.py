@@ -297,7 +297,10 @@ def evaluate_condition(
     grad_lr: float = 0.05,
     grad_tau_start: float = 1.0,
     grad_tau_end: float = 0.1,
+<<<<<<< HEAD
     record_all_rollouts: bool = False,
+=======
+>>>>>>> hwm
 ) -> list[dict]:
     """Run *n_episodes* for *condition* and return list of result dicts.
 
@@ -922,7 +925,10 @@ def main() -> None:
                 grad_lr=args.grad_lr,
                 grad_tau_start=args.grad_tau_start,
                 grad_tau_end=args.grad_tau_end,
+<<<<<<< HEAD
                 record_all_rollouts=args.save_rollout_gifs is not None,
+=======
+>>>>>>> hwm
             )
             if wandb_run is not None:
                 wandb_log_condition_final(
@@ -1075,8 +1081,11 @@ def main() -> None:
         "grad_lr": args.grad_lr,
         "grad_tau_start": args.grad_tau_start,
         "grad_tau_end": args.grad_tau_end,
+<<<<<<< HEAD
         "save_rollout_gifs": args.save_rollout_gifs,
         "rollout_gif_fps": args.rollout_gif_fps if args.save_rollout_gifs else None,
+=======
+>>>>>>> hwm
     }
     results_config.update(eval_repro_metadata(args, conditions_to_run))
 
