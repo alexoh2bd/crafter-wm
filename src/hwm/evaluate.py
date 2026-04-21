@@ -118,15 +118,20 @@ def _worker_run_episode(task: dict) -> dict:
     import time as _time
     from functools import partial as _partial
 
-    condition     = task["condition"]
-    name          = task["name"]
-    goal_frame    = task["goal_frame"]
-    seed          = task["seed"]
-    max_steps     = task["max_steps"]
-    ach_step      = task["ach_step"]
-    src_ep        = task["src_ep"]
-    verbose       = task["verbose"]
+    condition      = task["condition"]
+    name           = task["name"]
+    goal_frame     = task["goal_frame"]
+    seed           = task["seed"]
+    max_steps      = task["max_steps"]
+    ach_step       = task["ach_step"]
+    src_ep         = task["src_ep"]
+    verbose        = task["verbose"]
     record_rollout = task["record_rollout"]
+    planner        = task.get("planner", "grad")
+    grad_n_steps   = task.get("grad_n_steps", 30)
+    grad_lr        = task.get("grad_lr", 0.05)
+    grad_tau_start = task.get("grad_tau_start", 1.0)
+    grad_tau_end   = task.get("grad_tau_end", 0.1)
 
     lewm   = _PROC_CACHE["lewm"]
     device = _PROC_CACHE["device"]
@@ -168,11 +173,12 @@ def _worker_run_episode(task: dict) -> dict:
             _PROC_CACHE["high_pred"]   = _hp
             _PROC_CACHE["macro_mean"]  = _mm
             _PROC_CACHE["macro_std"]   = _ms
+        oracle = condition == "hwm_oracle"
         result = _run(
             lewm, _PROC_CACHE["high_pred"], goal_frame, name,
             goal_achievement_step=ach_step,
             seed=seed, max_steps=max_steps,
-            oracle=(condition == "hwm_oracle"),
+            oracle=oracle,
             traj_dataset_path=_PROC_CACHE["traj_dataset"],
             latents_path=_PROC_CACHE["latents_cache"],
             device=device, verbose=verbose,
@@ -181,6 +187,9 @@ def _worker_run_episode(task: dict) -> dict:
             goal_source_ep_idx=src_ep,
             macro_action_mean=_PROC_CACHE.get("macro_mean"),
             macro_action_std=_PROC_CACHE.get("macro_std"),
+            planner=planner,
+            grad_n_steps=grad_n_steps, grad_lr=grad_lr,
+            grad_tau_start=grad_tau_start, grad_tau_end=grad_tau_end,
         )
 
     else:
@@ -275,6 +284,11 @@ def evaluate_condition(
     macro_action_mean=None,
     macro_action_std=None,
     achievements_up_to: str | None = "collect_iron",
+    planner: str = "grad",
+    grad_n_steps: int = 30,
+    grad_lr: float = 0.05,
+    grad_tau_start: float = 1.0,
+    grad_tau_end: float = 0.1,
 ) -> list[dict]:
     """Run *n_episodes* for *condition* and return list of result dicts.
 
@@ -326,11 +340,12 @@ def evaluate_condition(
             )
         elif condition in ("hwm", "hwm_oracle"):
             assert high_pred is not None, "high_pred required for hwm condition"
+            oracle = condition == "hwm_oracle"
             result = run_hwm(
                 lewm, high_pred, frame, name,
                 goal_achievement_step=ach_step,
                 seed=seed, max_steps=max_steps,
-                oracle=(condition == "hwm_oracle"),
+                oracle=oracle,
                 traj_dataset_path=traj_dataset_path,
                 latents_path=latents_path,
                 device=device, verbose=verbose,
@@ -339,6 +354,11 @@ def evaluate_condition(
                 goal_source_ep_idx=src_ep,
                 macro_action_mean=macro_action_mean,
                 macro_action_std=macro_action_std,
+                planner=planner,
+                grad_n_steps=grad_n_steps,
+                grad_lr=grad_lr,
+                grad_tau_start=grad_tau_start,
+                grad_tau_end=grad_tau_end,
             )
         else:
             raise ValueError(f"Unknown condition: {condition}")
@@ -710,6 +730,16 @@ def main() -> None:
                         help="Restrict eval to tech-tree achievements up to and "
                              "including this one.  Pass 'all' to use the full "
                              "TECH_TREE_ORDER (22 achievements).")
+    parser.add_argument(
+        "--planner",
+        default="grad",
+        choices=["cem", "grad"],
+        help="HWM low-level planner: CEM vs Gumbel-softmax + Adam (grad, default)",
+    )
+    parser.add_argument("--grad_n_steps", type=int, default=30)
+    parser.add_argument("--grad_lr", type=float, default=0.05)
+    parser.add_argument("--grad_tau_start", type=float, default=1.0)
+    parser.add_argument("--grad_tau_end", type=float, default=0.1)
     parser.add_argument("--fit_probes",      action="store_true",
                         help="Fit probes from latents.npz and human NPZ files, "
                              "print accuracy table, then exit (no eval run)")
@@ -817,6 +847,11 @@ def main() -> None:
                 macro_action_mean=macro_mean,
                 macro_action_std=macro_std,
                 achievements_up_to=args.achievements_up_to,
+                planner=args.planner,
+                grad_n_steps=args.grad_n_steps,
+                grad_lr=args.grad_lr,
+                grad_tau_start=args.grad_tau_start,
+                grad_tau_end=args.grad_tau_end,
             )
             if wandb_run is not None:
                 wandb_log_condition_final(
@@ -858,6 +893,11 @@ def main() -> None:
                     "max_steps":      args.max_steps,
                     "record_rollout": ep >= args.n_episodes - n_rollout_record,
                     "verbose":        args.verbose,
+                    "planner":        args.planner,
+                    "grad_n_steps":   args.grad_n_steps,
+                    "grad_lr":        args.grad_lr,
+                    "grad_tau_start": args.grad_tau_start,
+                    "grad_tau_end":   args.grad_tau_end,
                 })
 
         n_total = len(all_tasks)
@@ -941,6 +981,11 @@ def main() -> None:
         "n_workers": args.n_workers,
         "cost": args.cost,
         "probe_path": args.probe_path if args.cost == "probe" else None,
+        "planner": args.planner,
+        "grad_n_steps": args.grad_n_steps,
+        "grad_lr": args.grad_lr,
+        "grad_tau_start": args.grad_tau_start,
+        "grad_tau_end": args.grad_tau_end,
     }
     results_config.update(eval_repro_metadata(args, conditions_to_run))
 

@@ -5,7 +5,10 @@ Predictor: Causal Transformer with AdaLN action conditioning
 Loss: MSE + SIGReg(lambda=0.1)
 """
 
+from __future__ import annotations
+
 import random
+from typing import Optional
 
 import torch
 import torch.nn as nn
@@ -341,15 +344,27 @@ class LeWM(nn.Module):
         """
         return self.predictor(z_seq, a_seq)
 
-    def forward(self, obs_seq, a_seq, rollout_steps: int = 0,
-                rollout_loss_weight: float = 0.1):
+    def forward(
+        self,
+        obs_seq,
+        a_seq,
+        rollout_steps: int = 0,
+        rollout_loss_weight: float = 0.1,
+        pred_action_weights: Optional[torch.Tensor] = None,
+    ):
         """
         obs_seq: (B, T, C, H, W)
         a_seq:   (B, T, action_dim)
         rollout_steps:       Number of open-loop steps for the rollout loss
                              (0 = disabled, backward-compatible default).
         rollout_loss_weight: Weight applied to rollout_loss in total_loss.
-        Returns dict with loss, pred_loss, sigreg_loss[, rollout_loss]
+        pred_action_weights: Optional (action_dim,) tensor of non-negative weights.
+                             When set, prediction MSE is averaged over time with
+                             per-step weights w[a_t] where a_t is the action index
+                             at each teacher-forcing step (same indexing as unweighted loss).
+        Returns dict with loss, pred_loss, sigreg_loss[, rollout_loss].
+        pred_loss / sigreg_loss are scalar tensors (not .item()) so torch.compile
+        does not graph-break; callers should float(...) or .item() when logging.
         """
         B, T, C, H, W = obs_seq.shape
 
@@ -362,12 +377,17 @@ class LeWM(nn.Module):
         z_hat = self.predictor(z_seq, a_seq)    # (B, T, D)
 
         # Prediction loss: z_hat[:, :-1] vs z_seq[:, 1:]
-        pred_loss = F.mse_loss(
-            z_hat[:, :-1],    # predicted z_{2:T}
-            z_seq[:, 1:].detach()  # target z_{2:T}
-            # Note: detach target only — no stop-gradient on encoder
-            # The encoder IS optimized through pred_loss
-        )
+        if pred_action_weights is None:
+            pred_loss = F.mse_loss(
+                z_hat[:, :-1],    # predicted z_{2:T}
+                z_seq[:, 1:].detach()  # target z_{2:T}
+            )
+        else:
+            err = (z_hat[:, :-1] - z_seq[:, 1:].detach()) ** 2  # (B, T-1, D)
+            per_step = err.mean(dim=-1)                         # (B, T-1)
+            a_idx = a_seq[:, :-1].argmax(dim=-1).long()         # (B, T-1)
+            w = pred_action_weights[a_idx].clamp(min=0.0)       # (B, T-1)
+            pred_loss = (per_step * w).mean()
 
         # SIGReg on all embeddings (step-wise, per paper Alg.1)
         # Apply per-timestep: average SIGReg over T steps
@@ -397,12 +417,12 @@ class LeWM(nn.Module):
                 acc = acc + F.mse_loss(z_r, z_seq[:, s + k + 1].detach())
             rollout_loss = acc / rollout_steps
             total_loss = total_loss + rollout_loss_weight * rollout_loss
-            rollout_loss_val = rollout_loss.item()
+            rollout_loss_val = rollout_loss.detach()
 
         out = {
             'loss': total_loss,
-            'pred_loss': pred_loss.item(),
-            'sigreg_loss': sigreg_loss.item(),
+            'pred_loss': pred_loss.detach(),
+            'sigreg_loss': sigreg_loss.detach(),
             'z_seq': z_seq,
             'z_hat': z_hat,
         }

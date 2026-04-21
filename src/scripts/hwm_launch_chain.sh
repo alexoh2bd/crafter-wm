@@ -11,12 +11,15 @@
 # Chain HWM pipeline: train with K=4-10 intermediate waypoints, then eval.
 #
 # Assumes the following artifacts already exist (built by hwm_launch.sh):
-#   - lewm_human_ft/best.pt          (LeWM checkpoint)
+#   - lewm_balanced_ppo/best.pt      (LeWM checkpoint; train_lewm_balanced + config infra.logdir)
 #   - wm_cache/trajectory_dataset.npz
 #   - wm_cache/latents.npz
 #   - wm_cache/goal_library.npz
 #   - wm_cache/ridge_model.pkl
 #   - wm_cache/probes.pkl            (only needed when COST=probe)
+#
+# Latents in wm_cache are encoder-specific; if those files were built from another
+# LeWM, re-encode / rebuild cache with this checkpoint before training the chain HWM.
 #
 # For a separate run with heavier sampling + epochs (different save dir, see
 # hwm_launch_chain_strong.sh → hwm_high_chain_strong / results_chain_strong.json).
@@ -31,6 +34,7 @@
 # Environment overrides:
 #   WANDB=0        disable Weights & Biases (enabled by default for train + eval)
 #   COST=l1        use L1 cost instead of probe cost (default: probe)
+#   LEWM_CHECKPOINT=/path/to/best.pt   override balanced LeWM path (default: lewm_balanced_ppo/best.pt)
 
 set -e
 
@@ -73,7 +77,8 @@ WANDB_FLAG="--wandb"
 COST="${COST:-probe}"
 
 # ── Paths ─────────────────────────────────────────────────────────────────────
-CHECKPOINT="${PROJECT_ROOT}/data/crafter/world_model/lewm_human_ft/best.pt"
+# Balanced LeWM (see src/config_lewm_balanced.yaml infra.logdir → lewm_balanced_ppo)
+CHECKPOINT="${LEWM_CHECKPOINT:-${PROJECT_ROOT}/data/crafter/world_model/lewm_balanced_ppo/best.pt}"
 DATA_OUT="${PROJECT_ROOT}/data/crafter/wm_cache"
 GOAL_LIBRARY="${DATA_OUT}/goal_library.npz"
 TRAJ_DATASET="${DATA_OUT}/trajectory_dataset.npz"
@@ -84,6 +89,8 @@ PROBE_PATH="${DATA_OUT}/probes.pkl"
 HWM_CHAIN_LOGDIR="${PROJECT_ROOT}/data/crafter/world_model/hwm_high_chain"
 HWM_CHAIN_CKPT="${HWM_CHAIN_LOGDIR}/best.pt"
 CHAIN_RESULTS_JSON="${PROJECT_ROOT}/results/results_chain.json"
+
+echo "LeWM checkpoint (base world model): ${CHECKPOINT}"
 
 # ── Sanity checks ─────────────────────────────────────────────────────────────
 require_file() { [[ -f "$1" ]] || { echo "ERROR: Missing required file: $1"; exit 1; }; }

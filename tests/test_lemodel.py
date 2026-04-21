@@ -73,12 +73,14 @@ class TestLeWMForward:
         out = tiny_model(obs_seq, a_seq)
         assert out["loss"].shape == ()
 
-    def test_pred_loss_sigreg_loss_are_floats(self, tiny_model):
-        """pred_loss and sigreg_loss are detached floats (for logging)."""
+    def test_pred_loss_sigreg_loss_are_scalar_tensors(self, tiny_model):
+        """pred_loss / sigreg_loss are detached scalars (float() for logging; compile-friendly)."""
         obs_seq, a_seq = make_batch()
         out = tiny_model(obs_seq, a_seq)
-        assert isinstance(out["pred_loss"], float)
-        assert isinstance(out["sigreg_loss"], float)
+        assert out["pred_loss"].shape == ()
+        assert out["sigreg_loss"].shape == ()
+        assert not out["pred_loss"].requires_grad
+        assert not out["sigreg_loss"].requires_grad
 
     def test_z_seq_shape(self, tiny_model, tiny_lewm_kwargs):
         obs_seq, a_seq = make_batch()
