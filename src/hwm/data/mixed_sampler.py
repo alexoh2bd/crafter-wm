@@ -108,11 +108,19 @@ class MixedTransitionSampler:
             ppo_trajs = trajectories_from_buffer_dict(load_buffer(ppo_buffer_path))
 
         self.random_trajs = self._filter_long_enough(random_trajs, seq_len)
-        self.ppo_trajs = self._filter_long_enough(ppo_trajs, seq_len)
-        if not self.random_trajs:
+        self.ppo_trajs = (
+            self._filter_long_enough(ppo_trajs, seq_len) if ppo_trajs else []
+        )
+        rr = float(self.random_ratio)
+        if rr < 0.0 or rr > 1.0:
+            raise ValueError("random_ratio must be in [0, 1]")
+        if not self.random_trajs and rr > 1e-9:
             raise ValueError("No random trajectories long enough for seq_len")
-        if not self.ppo_trajs:
-            raise ValueError("No PPO trajectories long enough for seq_len")
+        if not self.ppo_trajs and rr < 1.0 - 1e-9:
+            raise ValueError(
+                "No PPO trajectories long enough for seq_len "
+                "(set random_ratio=1.0 for random-buffer-only training)"
+            )
 
     @staticmethod
     def _filter_long_enough(trajs: list, seq_len: int) -> list:
@@ -142,8 +150,14 @@ class MixedTransitionSampler:
         return obs, actions
 
     def sample_batch(self, batch_size: int) -> tuple[np.ndarray, np.ndarray]:
-        n_random = int(batch_size * self.random_ratio)
-        n_ppo = batch_size - n_random
+        rr = float(self.random_ratio)
+        if rr >= 1.0 - 1e-9:
+            n_random, n_ppo = batch_size, 0
+        elif rr <= 1e-9:
+            n_random, n_ppo = 0, batch_size
+        else:
+            n_random = int(batch_size * rr)
+            n_ppo = batch_size - n_random
         parts_o: list[np.ndarray] = []
         parts_a: list[np.ndarray] = []
         if n_random > 0:

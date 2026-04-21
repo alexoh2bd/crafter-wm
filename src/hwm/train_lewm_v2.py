@@ -27,11 +27,11 @@ if str(_SRC) not in sys.path:
     sys.path.insert(0, str(_SRC))
 
 from hwm.constants import ACTION_DIM
-from hwm.data.mixed_sampler import MixedTransitionSampler
+from hwm.data.mixed_sampler import MixedTransitionSampler, trajectories_from_buffer_dict
 from lemodel import LeWM
 
 DEFAULT_CONFIG = {
-    "random_buffer": "data/crafter/ppo_rollouts/crafter_data.pkl",
+    "random_buffer": "data/crafter/ppo_rollouts/crafter_data.pkl",  # mixed/epsilon collection; or uniform random_500k.pkl
     "ppo_buffer": "data/crafter/ppo_rollouts/crafter_teacher_data.pkl",
     "random_ratio": 0.7,
     "seq_len": 16,
@@ -53,6 +53,11 @@ DEFAULT_CONFIG = {
     "diagnostic_every": 5000,
     "seed": 0,
     "precision": "bf16",
+    "wandb": False,
+    "wandb_project": "lewm-crafter",
+    "wandb_run_name": None,
+    "random_only": False,
+    "resume": None,
 }
 
 
@@ -181,6 +186,21 @@ def run_action_magnitude_diagnostic(
     return ratio
 
 
+def _wandb_sanitize_config(cfg: dict) -> dict:
+    """Subset of cfg suitable for wandb config (JSON-serializable)."""
+    out: dict = {}
+    for k, v in cfg.items():
+        if k.startswith("wandb_") or k == "wandb":
+            continue
+        if isinstance(v, Path):
+            out[k] = str(v)
+        elif isinstance(v, (int, float, str, bool)) or v is None:
+            out[k] = v
+        else:
+            out[k] = str(v)
+    return out
+
+
 def lr_at_step(step: int, warmup_steps: int, total_steps: int, lr_max: float, lr_min: float = 0.0) -> float:
     """Linear warmup then cosine decay to lr_min (global step index ``step``)."""
     if step < warmup_steps:
@@ -191,6 +211,8 @@ def lr_at_step(step: int, warmup_steps: int, total_steps: int, lr_max: float, lr
 
 def train(args: argparse.Namespace) -> None:
     cfg = {**DEFAULT_CONFIG, **vars(args)}
+    if cfg.get("random_only"):
+        cfg["random_ratio"] = 1.0
     rng = np.random.default_rng(cfg["seed"])
     torch.manual_seed(cfg["seed"])
 
@@ -202,28 +224,35 @@ def train(args: argparse.Namespace) -> None:
     )
 
     random_path = _resolve_path(cfg["random_buffer"])
-    ppo_path = _resolve_path(cfg["ppo_buffer"])
 
     with open(random_path, "rb") as f:
         random_data = pickle.load(f)
-    with open(ppo_path, "rb") as f:
-        ppo_data = pickle.load(f)
 
-    r_train, r_val = split_trajectories(random_data["trajectories"], cfg["val_frac"], rng)
-    p_train, p_val = split_trajectories(ppo_data["trajectories"], cfg["val_frac"], rng)
+    r_train, r_val = split_trajectories(
+        trajectories_from_buffer_dict(random_data), cfg["val_frac"], rng
+    )
+    if cfg.get("random_only"):
+        p_train, p_val = [], []
+    else:
+        ppo_path = _resolve_path(cfg["ppo_buffer"])
+        with open(ppo_path, "rb") as f:
+            ppo_data = pickle.load(f)
+        p_train, p_val = split_trajectories(
+            trajectories_from_buffer_dict(ppo_data), cfg["val_frac"], rng
+        )
 
     train_sampler = MixedTransitionSampler(
         random_trajs=r_train,
         ppo_trajs=p_train,
         seq_len=cfg["seq_len"],
-        random_ratio=cfg["random_ratio"],
+        random_ratio=float(cfg["random_ratio"]),
         seed=int(cfg["seed"]),
     )
     val_sampler = MixedTransitionSampler(
         random_trajs=r_val,
         ppo_trajs=p_val,
         seq_len=cfg["seq_len"],
-        random_ratio=cfg["random_ratio"],
+        random_ratio=float(cfg["random_ratio"]),
         seed=int(cfg["seed"]) + 1,
     )
 
@@ -243,8 +272,6 @@ def train(args: argparse.Namespace) -> None:
         predictor_hidden_dim=cfg["predictor_hidden_dim"],
     ).to(device)
 
-    verify_adaln_zero_init(model)
-
     params = list(model.parameters())
     optimizer = torch.optim.AdamW(
         params,
@@ -252,10 +279,50 @@ def train(args: argparse.Namespace) -> None:
         weight_decay=cfg["weight_decay"],
         betas=(0.9, 0.95),
     )
+
+    start_step = 0
+    resume_path = cfg.get("resume")
+    if resume_path:
+        rp = Path(resume_path)
+        if not rp.is_file():
+            rp = _resolve_path(resume_path)
+        if not rp.is_file():
+            raise FileNotFoundError(f"--resume checkpoint not found: {resume_path}")
+        payload = torch.load(rp, map_location=device)
+        model.load_state_dict(payload["model"])
+        optimizer.load_state_dict(payload["optimizer"])
+        start_step = int(payload["step"]) + 1
+        print(f"Resuming from {rp} at step {start_step} (saved step {payload['step']})")
+    else:
+        verify_adaln_zero_init(model)
+
     logdir = Path(cfg["logdir"])
     logdir.mkdir(parents=True, exist_ok=True)
     metrics_path = logdir / "metrics.jsonl"
-    metrics_f = open(metrics_path, "w", encoding="utf-8")
+    metrics_mode = "a" if resume_path else "w"
+    metrics_f = open(metrics_path, metrics_mode, encoding="utf-8")
+
+    wandb_run = None
+    if cfg.get("wandb"):
+        try:
+            import wandb as _wandb
+        except ImportError:
+            print(
+                "Warning: --wandb set but wandb is not installed; "
+                "install with `pip install wandb`"
+            )
+        else:
+            run_name = cfg.get("wandb_run_name") or f"lewm-v2-{logdir.name}"
+            wb_tags = ["lewm-v2", "lewm"]
+            if cfg.get("random_only"):
+                wb_tags.append("random-only")
+            wandb_run = _wandb.init(
+                project=cfg.get("wandb_project", "lewm-crafter"),
+                name=run_name,
+                job_type="train",
+                tags=wb_tags,
+                config=_wandb_sanitize_config(cfg),
+            )
 
     def log(row: dict) -> None:
         line = " | ".join(
@@ -264,6 +331,15 @@ def train(args: argparse.Namespace) -> None:
         print(line)
         metrics_f.write(json.dumps(row, default=str) + "\n")
         metrics_f.flush()
+        if wandb_run is not None:
+            import wandb as _wandb
+
+            wrow = {k: v for k, v in row.items()}
+            st = wrow.get("step")
+            if st is not None:
+                _wandb.log(wrow, step=int(st))
+            else:
+                _wandb.log(wrow)
 
     ckpt_args = {
         "img_size": 64,
@@ -281,10 +357,20 @@ def train(args: argparse.Namespace) -> None:
     }
 
     best_val = float("inf")
+    if resume_path:
+        best_val = float(payload.get("val_loss", float("inf")))
+
+    if start_step >= cfg["n_steps"]:
+        print(
+            f"Nothing to do: resume start_step {start_step} >= n_steps {cfg['n_steps']}"
+        )
+        metrics_f.close()
+        return
+
     dtype = torch.bfloat16 if use_amp else torch.float32
 
     t0 = time.perf_counter()
-    for step in range(cfg["n_steps"]):
+    for step in range(start_step, cfg["n_steps"]):
         model.train()
         obs_np, actions_np = train_sampler.sample_batch(cfg["batch_size"])
         obs = torch.from_numpy(obs_np).float().div_(255.0).permute(0, 1, 4, 2, 3).to(
@@ -386,6 +472,11 @@ def train(args: argparse.Namespace) -> None:
     )
 
     metrics_f.close()
+    if wandb_run is not None:
+        import wandb as _wandb
+
+        _wandb.summary["best_val_loss"] = best_val if best_val < float("inf") else None
+        _wandb.finish()
     print(f"Done. Logs: {metrics_path}")
 
 
@@ -430,6 +521,25 @@ def build_arg_parser() -> argparse.ArgumentParser:
         choices=("bf16", "fp32"),
     )
     p.add_argument("--log-every", type=int, default=100)
+    p.add_argument("--wandb", action="store_true", help="Log metrics to Weights & Biases")
+    p.add_argument("--wandb-project", type=str, default=DEFAULT_CONFIG["wandb_project"])
+    p.add_argument(
+        "--wandb-run-name",
+        type=str,
+        default=None,
+        help="W&B run name (default: lewm-v2-<logdir basename>)",
+    )
+    p.add_argument(
+        "--random-only",
+        action="store_true",
+        help="Train only on --random-buffer (uniform random rollouts); ignores --ppo-buffer and sets random_ratio=1",
+    )
+    p.add_argument(
+        "--resume",
+        type=str,
+        default=None,
+        help="Path to a .pt checkpoint (latest.pt or step_*.pt) to restore model, optimizer, and global step; metrics.jsonl is appended",
+    )
     return p
 
 
@@ -462,6 +572,11 @@ def main() -> None:
         seed=args.seed,
         precision=args.precision,
         log_every=args.log_every,
+        wandb=args.wandb,
+        wandb_project=args.wandb_project,
+        wandb_run_name=args.wandb_run_name,
+        random_only=args.random_only,
+        resume=args.resume,
     )
     train(ns)
 

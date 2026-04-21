@@ -21,6 +21,9 @@ Output: results/results.json  with per-episode records and aggregate stats.
 With --wandb: after each condition, logs aggregate metrics plus videos for the
 last three episodes of that condition (RGB Crafter frames).
 
+With ``--save_rollout_gifs DIR`` and e.g. ``--n_episodes 8``, records every
+episode and writes eight GIFs to ``DIR`` (requires ``imageio``).
+
 Usage
 -----
     # All conditions (sequential):
@@ -34,6 +37,10 @@ Usage
 
     # Append to existing results:
     python src/hwm/evaluate.py --condition hwm --append
+
+    # Eight rollout GIFs on disk (HWM policy):
+    python src/hwm/evaluate.py --condition hwm --n_episodes 8 \\
+        --save_rollout_gifs results/gifs_hwm
 """
 
 from __future__ import annotations
@@ -41,6 +48,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import subprocess
 import sys
 import time
@@ -289,6 +297,7 @@ def evaluate_condition(
     grad_lr: float = 0.05,
     grad_tau_start: float = 1.0,
     grad_tau_end: float = 0.1,
+    record_all_rollouts: bool = False,
 ) -> list[dict]:
     """Run *n_episodes* for *condition* and return list of result dicts.
 
@@ -306,7 +315,10 @@ def evaluate_condition(
     achievements = _ordered_achievements(goal_library, up_to=achievements_up_to)
     records = []
 
-    n_rollout_record = min(3, n_episodes)
+    if record_all_rollouts:
+        n_rollout_record = n_episodes
+    else:
+        n_rollout_record = min(3, n_episodes)
 
     for ep in range(n_episodes):
         seed = seed_start + ep
@@ -442,6 +454,50 @@ def wandb_log_condition_final(run, cond: str, stats: dict, step: int) -> None:
         payload[f"{cond}/per_achievement/{ach}/n_episodes"] = sub["n_episodes"]
         payload[f"{cond}/per_achievement/{ach}/success_rate"] = sub["success_rate"]
     run.log(payload, step=step)
+
+
+def save_rollout_gifs_to_dir(
+    records: list[dict],
+    out_dir: Path,
+    condition: str,
+    *,
+    fps: float = 8.0,
+) -> int:
+    """Write each episode's ``rollout_frames`` (uint8 H W 3) to a GIF under ``out_dir``.
+
+    Returns the number of GIFs written.
+    """
+    try:
+        import imageio.v2 as imageio
+    except ImportError as e:
+        raise SystemExit(
+            "--save_rollout_gifs requires imageio: pip install imageio"
+        ) from e
+
+    out_dir = Path(out_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    n = 0
+    for r in records:
+        vid_arr = r.get("rollout_frames")
+        if vid_arr is None:
+            continue
+        vid = np.asarray(vid_arr)
+        if vid.ndim != 4 or vid.shape[0] < 1:
+            continue
+        ep = int(r["episode"])
+        ach = str(r.get("achievement", "unknown"))
+        safe = re.sub(r"[^\w\-.]+", "_", ach).strip("_")[:48] or "ach"
+        ok = int(r.get("success", 0))
+        path = out_dir / f"{condition}_ep{ep:02d}_{safe}_ok{ok}.gif"
+        imageio.mimsave(str(path), list(vid), fps=min(20, max(4.0, float(fps))))
+        print(f"  rollout GIF → {path}  ({vid.shape[0]} frames)")
+        n += 1
+    if n == 0:
+        print(
+            f"  warning: wrote 0 GIFs for {condition} — no rollout_frames "
+            "(need more episodes recorded or record_rollout episodes)."
+        )
+    return n
 
 
 def wandb_log_rollouts(run, cond: str, records: list[dict], step: int) -> None:
@@ -746,6 +802,20 @@ def main() -> None:
     parser.add_argument("--npz_dir",         default=NPZ_DIR,
                         help="Directory of human playthrough .npz files "
                              "(used when --fit_probes)")
+    parser.add_argument(
+        "--save_rollout_gifs",
+        type=str,
+        default=None,
+        metavar="DIR",
+        help="Write RGB rollout GIFs to DIR (records all episodes; pair with "
+             "--n_episodes 8 for eight GIFs)",
+    )
+    parser.add_argument(
+        "--rollout_gif_fps",
+        type=float,
+        default=8.0,
+        help="Frames per second for --save_rollout_gifs (default: 8)",
+    )
     args = parser.parse_args()
 
     conditions_to_run = (
@@ -852,12 +922,20 @@ def main() -> None:
                 grad_lr=args.grad_lr,
                 grad_tau_start=args.grad_tau_start,
                 grad_tau_end=args.grad_tau_end,
+                record_all_rollouts=args.save_rollout_gifs is not None,
             )
             if wandb_run is not None:
                 wandb_log_condition_final(
                     wandb_run, cond, aggregate_one_condition(records), step=ci,
                 )
                 wandb_log_rollouts(wandb_run, cond, records, step=ci)
+            if args.save_rollout_gifs:
+                save_rollout_gifs_to_dir(
+                    records,
+                    Path(args.save_rollout_gifs),
+                    cond,
+                    fps=args.rollout_gif_fps,
+                )
             for r in records:
                 r.pop("rollout_frames", None)
             all_records.extend(records)
@@ -877,7 +955,11 @@ def main() -> None:
             achievements = _ordered_achievements(
                 goal_library, up_to=args.achievements_up_to
             )
-            n_rollout_record = min(3, args.n_episodes)
+            n_rollout_record = (
+                args.n_episodes
+                if args.save_rollout_gifs
+                else min(3, args.n_episodes)
+            )
             for ep in range(args.n_episodes):
                 seed = args.seed_start + ep
                 name, frame, ach_step, src_ep = achievements[ep % len(achievements)]
@@ -957,6 +1039,13 @@ def main() -> None:
                     wandb_run, cond, aggregate_one_condition(records), step=ci,
                 )
                 wandb_log_rollouts(wandb_run, cond, records, step=ci)
+            if args.save_rollout_gifs:
+                save_rollout_gifs_to_dir(
+                    records,
+                    Path(args.save_rollout_gifs),
+                    cond,
+                    fps=args.rollout_gif_fps,
+                )
             for r in records:
                 r.pop("rollout_frames", None)
 
@@ -986,6 +1075,8 @@ def main() -> None:
         "grad_lr": args.grad_lr,
         "grad_tau_start": args.grad_tau_start,
         "grad_tau_end": args.grad_tau_end,
+        "save_rollout_gifs": args.save_rollout_gifs,
+        "rollout_gif_fps": args.rollout_gif_fps if args.save_rollout_gifs else None,
     }
     results_config.update(eval_repro_metadata(args, conditions_to_run))
 
